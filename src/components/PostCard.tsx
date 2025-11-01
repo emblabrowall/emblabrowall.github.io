@@ -1,0 +1,318 @@
+import { useState, useEffect } from 'react'
+import { ThumbsUp, Flag, MessageCircle, MapPin, Euro, Sparkle } from 'lucide-react'
+import { Button } from './ui/button'
+import { Textarea } from './ui/textarea'
+import { api } from '../utils/api'
+import { ImageWithFallback } from './figma/ImageWithFallback'
+import { motion, AnimatePresence } from 'motion/react'
+
+interface Comment {
+  id: string
+  authorName: string
+  verified: boolean
+  content: string
+  timestamp: string
+}
+
+interface PostCardProps {
+  post: any
+  user: any
+  onLoginRequired: () => void
+  onPostUpdate: () => void
+}
+
+export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCardProps) {
+  const [hasUpvoted, setHasUpvoted] = useState(false)
+  const [upvotes, setUpvotes] = useState(post.upvotes || 0)
+  const [showComments, setShowComments] = useState(false)
+  const [comments, setComments] = useState<Comment[]>([])
+  const [newComment, setNewComment] = useState('')
+  const [loadingComments, setLoadingComments] = useState(false)
+  const [submittingComment, setSubmittingComment] = useState(false)
+
+  useEffect(() => {
+    if (user && post.id) {
+      checkUpvoteStatus()
+    }
+  }, [user, post.id])
+
+  const checkUpvoteStatus = async () => {
+    try {
+      const { hasUpvoted } = await api.getUpvoteStatus(post.id)
+      setHasUpvoted(hasUpvoted)
+    } catch (error) {
+      console.error('Error checking upvote status:', error)
+    }
+  }
+
+  const handleUpvote = async () => {
+    if (!user) {
+      onLoginRequired()
+      return
+    }
+
+    try {
+      const result = await api.upvotePost(post.id)
+      setHasUpvoted(result.hasUpvoted)
+      setUpvotes(result.upvotes)
+    } catch (error) {
+      console.error('Error upvoting post:', error)
+    }
+  }
+
+  const handleReport = async () => {
+    if (!user) {
+      onLoginRequired()
+      return
+    }
+
+    if (confirm('Are you sure you want to report this post?')) {
+      try {
+        await api.reportPost(post.id)
+        alert('Post reported. Moderators will review it.')
+      } catch (error: any) {
+        alert(error.error || 'Failed to report post')
+      }
+    }
+  }
+
+  const loadComments = async () => {
+    if (comments.length > 0) {
+      setShowComments(!showComments)
+      return
+    }
+
+    setLoadingComments(true)
+    try {
+      const { comments: fetchedComments } = await api.getComments(post.id)
+      setComments(fetchedComments)
+      setShowComments(true)
+    } catch (error) {
+      console.error('Error loading comments:', error)
+    } finally {
+      setLoadingComments(false)
+    }
+  }
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) {
+      onLoginRequired()
+      return
+    }
+
+    if (!newComment.trim()) return
+
+    setSubmittingComment(true)
+    try {
+      const { comment } = await api.addComment(post.id, newComment)
+      setComments([...comments, comment])
+      setNewComment('')
+    } catch (error) {
+      console.error('Error submitting comment:', error)
+    } finally {
+      setSubmittingComment(false)
+    }
+  }
+
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp)
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+
+  const getPriceSymbol = (price: string) => {
+    if (!price || price === 'free') return 'Free'
+    return '€'.repeat(parseInt(price) || 1)
+  }
+
+  const getRatingStars = (rating: number) => {
+    return '⭐'.repeat(Math.round(rating))
+  }
+
+  return (
+    <motion.div
+      className="group relative bg-white rounded-2xl shadow-sm border border-border p-6 hover:shadow-xl transition-all overflow-hidden"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Gradient accent on hover */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+      
+      {/* Glowing corner on hover */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/0 via-purple-400/0 to-pink-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-bl-full blur-2xl"></div>
+
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4 relative z-10">
+        <div className="flex-1">
+          <h3 className="mb-2">{post.title}</h3>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <motion.span
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50"
+              whileHover={{ scale: 1.05 }}
+            >
+              {post.category}
+            </motion.span>
+            {post.area && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {post.area}
+              </span>
+            )}
+            {post.price && (
+              <span className="flex items-center gap-1">
+                <Euro className="h-3 w-3" />
+                {getPriceSymbol(post.price)}
+              </span>
+            )}
+            {post.rating && (
+              <span>{getRatingStars(post.rating)}</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Photo */}
+      {post.photoUrl && (
+        <motion.div
+          className="mb-4 rounded-xl overflow-hidden relative"
+          whileHover={{ scale: 1.02 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ImageWithFallback
+            src={post.photoUrl}
+            alt={post.title}
+            className="w-full h-48 object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        </motion.div>
+      )}
+
+      {/* Content */}
+      <p className="text-foreground mb-4 whitespace-pre-wrap relative z-10">{post.content}</p>
+
+      {/* Author & Date */}
+      <div className="flex items-center justify-between text-sm text-muted-foreground mb-4 pb-4 border-b border-border relative z-10">
+        <div className="flex items-center gap-2">
+          <span>By {post.authorName}</span>
+          {post.verified && (
+            <motion.span
+              className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 border border-blue-300"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200 }}
+            >
+              <Sparkle className="h-3 w-3 mr-1" />
+              Verified
+            </motion.span>
+          )}
+        </div>
+        <span>{formatDate(post.timestamp)}</span>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2 relative z-10">
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button
+            variant={hasUpvoted ? 'default' : 'outline'}
+            size="sm"
+            onClick={handleUpvote}
+            className={`gap-2 ${hasUpvoted ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' : ''}`}
+          >
+            <ThumbsUp className="h-4 w-4" />
+            {upvotes}
+          </Button>
+        </motion.div>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadComments}
+            className="gap-2"
+          >
+            <MessageCircle className="h-4 w-4" />
+            {comments.length > 0 ? comments.length : 'Comment'}
+          </Button>
+        </motion.div>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="ml-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleReport}
+            className="gap-2"
+          >
+            <Flag className="h-4 w-4" />
+            Report
+          </Button>
+        </motion.div>
+      </div>
+
+      {/* Comments Section */}
+      <AnimatePresence>
+        {showComments && (
+          <motion.div
+            className="mt-6 pt-6 border-t border-border space-y-4"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {loadingComments ? (
+              <p className="text-sm text-muted-foreground">Loading comments...</p>
+            ) : (
+              <>
+                {comments.map((comment, index) => (
+                  <motion.div
+                    key={comment.id}
+                    className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 rounded-lg p-4 border border-blue-100/50"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm">{comment.authorName}</span>
+                      {comment.verified && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                          ✓
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        {formatDate(comment.timestamp)}
+                      </span>
+                    </div>
+                    <p className="text-sm">{comment.content}</p>
+                  </motion.div>
+                ))}
+
+                {/* Add Comment Form */}
+                <motion.form
+                  onSubmit={handleSubmitComment}
+                  className="space-y-3"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <Textarea
+                    placeholder="Add a comment..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    className="min-h-[80px] focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  />
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={submittingComment || !newComment.trim()}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
+                    {submittingComment ? 'Posting...' : 'Post Comment'}
+                  </Button>
+                </motion.form>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
