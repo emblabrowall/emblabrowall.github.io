@@ -14,6 +14,7 @@ interface HomePageProps {
 
 export function HomePage({ onNavigate, onSearch }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('')
+  const [videoError, setVideoError] = useState(false)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,23 +69,45 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
         <div className="relative rounded-3xl overflow-hidden">
         <div className="relative px-6 py-16 md:px-12 md:py-24 text-center overflow-hidden min-h-[500px]">
           {/* Video Background with Fallback */}
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover z-0"
-            poster="https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1920&q=80"
-          >
-            <source
-              src="https://cdn.pixabay.com/video/2020/06/15/42629-433789013_large.mp4"
-              type="video/mp4"
+          {!videoError ? (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover z-0"
+              poster="https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1920&q=80"
+              onError={(e) => {
+                setVideoError(true)
+                // Silently handle error - fallback to poster image
+                e.currentTarget.style.display = 'none'
+              }}
+            >
+              <source
+                src="https://cdn.pixabay.com/video/2020/06/15/42629-433789013_large.mp4"
+                type="video/mp4"
+                onError={() => {
+                  // Fallback to next source or poster
+                }}
+              />
+              <source
+                src="https://player.vimeo.com/external/370467553.sd.mp4?s=e90dcaba73c19e0e36f03406b47bbd6dc1c0b8c3&profile_id=164&oauth2_token_id=57447761"
+                type="video/mp4"
+                onError={() => {
+                  setVideoError(true)
+                }}
+              />
+            </video>
+          ) : (
+            <div 
+              className="absolute inset-0 w-full h-full object-cover z-0 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600"
+              style={{
+                backgroundImage: 'url(https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1920&q=80)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
             />
-            <source
-              src="https://player.vimeo.com/external/370467553.sd.mp4?s=e90dcaba73c19e0e36f03406b47bbd6dc1c0b8c3&profile_id=164&oauth2_token_id=57447761"
-              type="video/mp4"
-            />
-          </video>
+          )}
           
           {/* Gradient Overlay for better text readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70 z-[1]"></div>
