@@ -34,6 +34,16 @@ export function PostListPage({
     loadPosts()
   }, [category])
 
+  // Refetch posts after a short delay when component mounts to catch newly added posts
+  // This handles the case when navigating to a category page right after submitting a tip
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadPosts()
+    }, 1000) // 1 second delay to ensure the backend has processed the new post
+    
+    return () => clearTimeout(timer)
+  }, [category])
+
   useEffect(() => {
     setLocalSearchQuery(searchQuery)
   }, [searchQuery])

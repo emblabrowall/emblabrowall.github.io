@@ -9,7 +9,7 @@ import { Upload, X } from 'lucide-react'
 
 interface AddTipFormProps {
   user: any
-  onSuccess: () => void
+  onSuccess: (category: string) => void
   onLoginRequired: () => void
 }
 
@@ -90,6 +90,7 @@ export function AddTipForm({ user, onSuccess, onLoginRequired }: AddTipFormProps
       
       // Reset form
       setTitle('')
+      const submittedCategory = category
       setCategory('')
       setArea('')
       setPrice('')
@@ -98,7 +99,7 @@ export function AddTipForm({ user, onSuccess, onLoginRequired }: AddTipFormProps
       setPhotoFile(null)
       setPhotoPreview(null)
       
-      onSuccess()
+      onSuccess(submittedCategory)
     } catch (error: any) {
       console.error('Error creating post:', error)
       setError(error.message || 'Failed to create post')

@@ -65,9 +65,10 @@ export default function App() {
     setCurrentPage('search')
   }
 
-  const handleAddTipSuccess = () => {
+  const handleAddTipSuccess = (category: string) => {
     toast.success('Tip posted successfully! Thank you for contributing! 🙌')
-    setCurrentPage('home')
+    // Navigate to the category page to see the newly added tip
+    setCurrentPage(category)
   }
 
   const handleViewThread = (threadId: string) => {
