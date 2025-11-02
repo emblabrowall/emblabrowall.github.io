@@ -184,21 +184,27 @@ app.post('/make-server-3134d39c/posts', async (c) => {
 app.get('/make-server-3134d39c/posts', async (c) => {
   try {
     const category = c.req.query('category')
-    const allPosts = await kv.getByPrefix('posts:')
+    // getByPrefix already returns an array of values directly
+    let posts = await kv.getByPrefix('posts:') || []
     
-    let posts = allPosts.map(item => item.value)
+    // Filter out null/undefined posts and ensure they're valid objects
+    posts = posts.filter(post => post && typeof post === 'object')
     
     if (category && category !== 'all') {
       posts = posts.filter(post => post.category === category)
     }
 
     // Sort by timestamp (newest first)
-    posts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    posts.sort((a, b) => {
+      const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0
+      const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0
+      return timeB - timeA
+    })
 
     return c.json({ posts })
   } catch (error) {
     console.log(`Get posts error: ${error}`)
-    return c.json({ error: 'Failed to get posts' }, 500)
+    return c.json({ error: 'Failed to get posts', details: error.message || String(error) }, 500)
   }
 })
 
@@ -323,9 +329,8 @@ app.post('/make-server-3134d39c/posts/:postId/comments', async (c) => {
 app.get('/make-server-3134d39c/posts/:postId/comments', async (c) => {
   try {
     const postId = c.req.param('postId')
-    const allComments = await kv.getByPrefix(`comments:${postId}:`)
-    
-    const comments = allComments.map(item => item.value)
+    // getByPrefix already returns an array of values directly
+    const comments = await kv.getByPrefix(`comments:${postId}:`) || []
     comments.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
 
     return c.json({ comments })
@@ -438,9 +443,8 @@ app.post('/make-server-3134d39c/forum/threads', async (c) => {
 app.get('/make-server-3134d39c/forum/threads', async (c) => {
   try {
     const category = c.req.query('category')
-    const allThreads = await kv.getByPrefix('threads:')
-    
-    let threads = allThreads.map(item => item.value)
+    // getByPrefix already returns an array of values directly
+    let threads = await kv.getByPrefix('threads:') || []
     
     if (category && category !== 'all') {
       threads = threads.filter(thread => thread.category === category)
@@ -524,9 +528,8 @@ app.post('/make-server-3134d39c/forum/threads/:threadId/replies', async (c) => {
 app.get('/make-server-3134d39c/forum/threads/:threadId/replies', async (c) => {
   try {
     const threadId = c.req.param('threadId')
-    const allReplies = await kv.getByPrefix(`replies:${threadId}:`)
-    
-    const replies = allReplies.map(item => item.value)
+    // getByPrefix already returns an array of values directly
+    const replies = await kv.getByPrefix(`replies:${threadId}:`) || []
     replies.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
 
     return c.json({ replies })
@@ -594,16 +597,17 @@ app.post('/make-server-3134d39c/forum/replies/:replyId/upvote', async (c) => {
     
     const hasUpvoted = await kv.get(upvoteKey)
     
-    // Find the reply
-    const allReplies = await kv.getByPrefix('replies:')
-    const replyItem = allReplies.find(item => item.value.id === replyId)
+    // Find the reply - search through all replies to find matching ID
+    // Replies are stored as replies:${threadId}:${replyId}
+    const allReplies = await kv.getByPrefix('replies:') || []
+    const reply = allReplies.find(r => r && r.id === replyId)
     
-    if (!replyItem) {
+    if (!reply) {
       return c.json({ error: 'Reply not found' }, 404)
     }
 
-    const reply = replyItem.value
-    const replyKey = replyItem.key
+    // Reconstruct the key to update it
+    const replyKey = `replies:${reply.threadId}:${replyId}`
 
     if (hasUpvoted) {
       await kv.del(upvoteKey)
@@ -637,15 +641,13 @@ app.post('/make-server-3134d39c/forum/replies/:replyId/helpful', async (c) => {
 
     const replyId = c.req.param('replyId')
     
-    // Find the reply
-    const allReplies = await kv.getByPrefix('replies:')
-    const replyItem = allReplies.find(item => item.value.id === replyId)
+    // Find the reply - search through all replies to find matching ID
+    const allReplies = await kv.getByPrefix('replies:') || []
+    const reply = allReplies.find(r => r && r.id === replyId)
     
-    if (!replyItem) {
+    if (!reply) {
       return c.json({ error: 'Reply not found' }, 404)
     }
-
-    const reply = replyItem.value
     
     // Check if user is the thread author
     const thread = await kv.get(`threads:${reply.threadId}`)
