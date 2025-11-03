@@ -76,7 +76,7 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
               muted
               playsInline
               className="absolute inset-0 w-full h-full object-cover z-0"
-              poster="https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1920&q=80"
+              poster="https://images.unsplash.com/photo-8KCquMrFEPg?w=1920&q=80"
               onError={(e) => {
                 setVideoError(true)
                 // Silently handle error - fallback to poster image
@@ -102,7 +102,7 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
             <div 
               className="absolute inset-0 w-full h-full object-cover z-0 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600"
               style={{
-                backgroundImage: 'url(https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1920&q=80)',
+                backgroundImage: 'url(https://images.unsplash.com/photo-8KCquMrFEPg?w=1920&q=80)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
               }}
