@@ -61,8 +61,10 @@ export function AddTipForm({ user, onSuccess, onLoginRequired }: AddTipFormProps
   const [tripPrice, setTripPrice] = useState('')
   const [tripRating, setTripRating] = useState('')
 
-  // Calendar fields (will be added later if needed)
-  const [calendarData, setCalendarData] = useState('')
+  // Calendar fields
+  const [calendarTime, setCalendarTime] = useState('')
+  const [calendarPlace, setCalendarPlace] = useState('')
+  const [calendarActivityType, setCalendarActivityType] = useState('')
 
   const categories = [
     { value: 'courses', label: 'Courses' },
@@ -129,6 +131,9 @@ export function AddTipForm({ user, onSuccess, onLoginRequired }: AddTipFormProps
     setTravelTime('')
     setTripPrice('')
     setTripRating('')
+    setCalendarTime('')
+    setCalendarPlace('')
+    setCalendarActivityType('')
     setPhotoFile(null)
     setPhotoPreview(null)
   }
@@ -155,7 +160,8 @@ export function AddTipForm({ user, onSuccess, onLoginRequired }: AddTipFormProps
               category === 'food' ? restaurantName :
               category === 'clubs' ? name :
               category === 'activities' ? activityName :
-              category === 'trips' ? cityName : title,
+              category === 'trips' ? cityName :
+              category === 'calendar' ? title : title,
         category,
         content,
         photoData: photoPreview,
@@ -190,6 +196,10 @@ export function AddTipForm({ user, onSuccess, onLoginRequired }: AddTipFormProps
         postData.travelTime = travelTime || null
         postData.price = tripPrice || null
         postData.overallRating = tripRating || null
+      } else if (category === 'calendar') {
+        postData.time = calendarTime || null
+        postData.place = calendarPlace || null
+        postData.activityType = calendarActivityType || null
       }
 
       await api.createPost(postData)
@@ -619,11 +629,48 @@ export function AddTipForm({ user, onSuccess, onLoginRequired }: AddTipFormProps
 
       case 'calendar':
         return (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-900">
-              Calendar functionality coming soon! This will allow you to share important dates and events.
-            </p>
-          </div>
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="calendarActivityType">Type of Calendar Activity *</Label>
+              <Select value={calendarActivityType} onValueChange={setCalendarActivityType} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select activity type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="deadline">Deadline</SelectItem>
+                  <SelectItem value="event">Event</SelectItem>
+                  <SelectItem value="exam">Exam</SelectItem>
+                  <SelectItem value="holiday">Holiday</SelectItem>
+                  <SelectItem value="meeting">Meeting</SelectItem>
+                  <SelectItem value="workshop">Workshop</SelectItem>
+                  <SelectItem value="trip">Trip</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="calendarTime">Time *</Label>
+                <Input
+                  id="calendarTime"
+                  type="datetime-local"
+                  value={calendarTime}
+                  onChange={(e) => setCalendarTime(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="calendarPlace">Place *</Label>
+                <Input
+                  id="calendarPlace"
+                  placeholder="e.g., Room 101, Online, Main Campus"
+                  value={calendarPlace}
+                  onChange={(e) => setCalendarPlace(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          </>
         )
 
       default:
@@ -679,6 +726,7 @@ export function AddTipForm({ user, onSuccess, onLoginRequired }: AddTipFormProps
                       category === 'clubs' ? 'e.g., Bataplan Nightclub' :
                       category === 'activities' ? 'e.g., Hiking in Monte Igueldo' :
                       category === 'trips' ? 'e.g., Day trip to Bilbao' :
+                      category === 'calendar' ? 'e.g., Final Exam, Orientation Day' :
                       'Enter a title'
                     }
                     value={title}
@@ -745,7 +793,7 @@ export function AddTipForm({ user, onSuccess, onLoginRequired }: AddTipFormProps
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={submitting || !user || !category || category === 'calendar'}>
+          <Button type="submit" className="w-full" disabled={submitting || !user || !category}>
             {submitting ? 'Posting...' : 'Post Tip'}
           </Button>
         </form>

@@ -4,6 +4,8 @@ import { api } from '../utils/api'
 import { Filter, Search, Sparkles } from 'lucide-react'
 import { Input } from './ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { Checkbox } from './ui/checkbox'
+import { Label } from './ui/label'
 import { motion } from 'motion/react'
 
 interface PostListPageProps {
@@ -28,6 +30,7 @@ export function PostListPage({
   const [filterArea, setFilterArea] = useState('all')
   const [filterPrice, setFilterPrice] = useState('all')
   const [filterRating, setFilterRating] = useState('all')
+  const [filterExaminationTypes, setFilterExaminationTypes] = useState<string[]>([])
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery)
 
   useEffect(() => {
@@ -87,6 +90,13 @@ export function PostListPage({
     if (filterRating !== 'all') {
       const minRating = parseInt(filterRating)
       if (!post.rating || post.rating < minRating) return false
+    }
+
+    // Examination type filter (for courses)
+    if (category === 'courses' && filterExaminationTypes.length > 0) {
+      if (!post.examinationType || !filterExaminationTypes.includes(post.examinationType)) {
+        return false
+      }
     }
 
     return true
@@ -227,8 +237,47 @@ export function PostListPage({
           </motion.div>
         </div>
 
+        {/* Examination Type Filter (for courses only) */}
+        {category === 'courses' && (
+          <motion.div
+            className="mt-4 p-4 bg-gray-50 rounded-lg border border-border"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+          >
+            <Label className="text-sm font-medium mb-3 block">Examination Type (Select multiple)</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {['seminars', 'written-assignments', 'exams'].map((type) => {
+                const displayName = type === 'written-assignments' ? 'Written Assignments' : 
+                                   type === 'seminars' ? 'Seminars' : 'Exams'
+                return (
+                  <div key={type} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`exam-${type}`}
+                      checked={filterExaminationTypes.includes(type)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setFilterExaminationTypes([...filterExaminationTypes, type])
+                        } else {
+                          setFilterExaminationTypes(filterExaminationTypes.filter(t => t !== type))
+                        }
+                      }}
+                    />
+                    <Label
+                      htmlFor={`exam-${type}`}
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      {displayName}
+                    </Label>
+                  </div>
+                )
+              })}
+            </div>
+          </motion.div>
+        )}
+
         {/* Active filters count */}
-        {(filterArea !== 'all' || filterPrice !== 'all' || filterRating !== 'all' || localSearchQuery) && (
+        {(filterArea !== 'all' || filterPrice !== 'all' || filterRating !== 'all' || localSearchQuery || filterExaminationTypes.length > 0) && (
           <motion.div
             className="mt-4 flex items-center gap-2"
             initial={{ opacity: 0, height: 0 }}
@@ -243,6 +292,7 @@ export function PostListPage({
                 setFilterArea('all')
                 setFilterPrice('all')
                 setFilterRating('all')
+                setFilterExaminationTypes([])
                 setLocalSearchQuery('')
               }}
               className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors"
