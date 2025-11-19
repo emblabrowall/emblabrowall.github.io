@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { PostCard } from './PostCard'
+import { AddTipForm } from './AddTipForm'
 import { api } from '../utils/api'
-import { Filter, Search, Sparkles } from 'lucide-react'
+import { Filter, Search, Sparkles, Plus } from 'lucide-react'
 import { Input } from './ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { Checkbox } from './ui/checkbox'
 import { Label } from './ui/label'
+import { Button } from './ui/button'
 import { motion } from 'motion/react'
 
 interface PostListPageProps {
@@ -32,6 +34,7 @@ export function PostListPage({
   const [filterRating, setFilterRating] = useState('all')
   const [filterExaminationTypes, setFilterExaminationTypes] = useState<string[]>([])
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery)
+  const [showAddTipForm, setShowAddTipForm] = useState(false)
 
   useEffect(() => {
     loadPosts()
@@ -117,6 +120,31 @@ export function PostListPage({
     { value: 'Spring', label: 'Spring Semester' },
   ] : []
 
+  const handleAddTipSuccess = (cat: string) => {
+    setShowAddTipForm(false)
+    loadPosts()
+  }
+
+  if (showAddTipForm) {
+    return (
+      <div className="space-y-6">
+        <Button
+          variant="ghost"
+          onClick={() => setShowAddTipForm(false)}
+          className="mb-4"
+        >
+          ← Back to {title}
+        </Button>
+        <AddTipForm
+          user={user}
+          onSuccess={handleAddTipSuccess}
+          onLoginRequired={onLoginRequired}
+          initialCategory={category}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -129,18 +157,29 @@ export function PostListPage({
         {/* Animated background pattern */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100/50 via-purple-100/50 to-pink-100/50 rounded-full blur-3xl opacity-50"></div>
         
-        <div className="relative z-10">
-          <motion.div
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50 rounded-full px-3 py-1 mb-3"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring' }}
-          >
-            <Sparkles className="h-4 w-4 text-blue-600" />
-            <span className="text-sm text-blue-700">{category}</span>
-          </motion.div>
-          <h1 className="mb-3">{title}</h1>
-          <p className="text-muted-foreground">{description}</p>
+        <div className="relative z-10 flex items-start justify-between">
+          <div>
+            <motion.div
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50 rounded-full px-3 py-1 mb-3"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring' }}
+            >
+              <Sparkles className="h-4 w-4 text-blue-600" />
+              <span className="text-sm text-blue-700">{category}</span>
+            </motion.div>
+            <h1 className="mb-3">{title}</h1>
+            <p className="text-muted-foreground">{description}</p>
+          </div>
+          {user && (
+            <Button
+              onClick={() => setShowAddTipForm(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Tip
+            </Button>
+          )}
         </div>
       </motion.div>
 
@@ -221,7 +260,7 @@ export function PostListPage({
                   <SelectItem value="3">€€€ (Expensive)</SelectItem>
                 </SelectContent>
               </Select>
-            ) : (
+            ) : category === 'courses' ? (
               <Select value={filterRating} onValueChange={setFilterRating}>
                 <SelectTrigger className="focus:ring-2 focus:ring-blue-500/20 transition-all">
                   <SelectValue placeholder="All Ratings" />
@@ -233,7 +272,19 @@ export function PostListPage({
                   <SelectItem value="2">2+ Stars</SelectItem>
                 </SelectContent>
               </Select>
-            )}
+            ) : category === 'activities' || category === 'trips' ? (
+              <Select value={filterRating} onValueChange={setFilterRating}>
+                <SelectTrigger className="focus:ring-2 focus:ring-blue-500/20 transition-all">
+                  <SelectValue placeholder="All Ratings" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Ratings</SelectItem>
+                  <SelectItem value="4">4+ Stars</SelectItem>
+                  <SelectItem value="3">3+ Stars</SelectItem>
+                  <SelectItem value="2">2+ Stars</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : null}
           </motion.div>
         </div>
 

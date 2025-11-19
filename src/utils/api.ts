@@ -278,4 +278,30 @@ export const api = {
     })
     return response.json()
   },
+
+  async deletePost(postId: string) {
+    const session = await this.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    const response = await fetch(`${API_URL}/posts/${postId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    })
+    return response.json()
+  },
+
+  async deleteComment(postId: string, commentId: string) {
+    const session = await this.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    const response = await fetch(`${API_URL}/posts/${postId}/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    })
+    return response.json()
+  },
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
@@ -11,10 +11,11 @@ interface AddTipFormProps {
   user: any
   onSuccess: (category: string) => void
   onLoginRequired: () => void
+  initialCategory?: string
 }
 
-export function AddTipForm({ user, onSuccess, onLoginRequired }: AddTipFormProps) {
-  const [category, setCategory] = useState('')
+export function AddTipForm({ user, onSuccess, onLoginRequired, initialCategory }: AddTipFormProps) {
+  const [category, setCategory] = useState(initialCategory || '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -74,6 +75,13 @@ export function AddTipForm({ user, onSuccess, onLoginRequired }: AddTipFormProps
     { value: 'trips', label: 'Trips' },
     { value: 'calendar', label: 'Calendar' },
   ]
+
+  // Update category when initialCategory changes
+  useEffect(() => {
+    if (initialCategory) {
+      setCategory(initialCategory)
+    }
+  }, [initialCategory])
 
   const neighborhoods = [
     'Centro / Old Town',

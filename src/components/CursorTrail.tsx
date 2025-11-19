@@ -14,9 +14,10 @@ export function CursorTrail() {
   const cursorX = useMotionValue(0)
   const cursorY = useMotionValue(0)
   
-  const springConfig = { damping: 25, stiffness: 150 }
-  const cursorXSpring = useSpring(cursorX, springConfig)
-  const cursorYSpring = useSpring(cursorY, springConfig)
+  // Remove spring animation for instant cursor response
+  // const springConfig = { damping: 25, stiffness: 150 }
+  // const cursorXSpring = useSpring(cursorX, springConfig)
+  // const cursorYSpring = useSpring(cursorY, springConfig)
 
   useEffect(() => {
     let particleId = 0
@@ -61,24 +62,7 @@ export function CursorTrail() {
 
   return (
     <>
-      {/* Custom cursor */}
-      <motion.div
-        className="fixed top-0 left-0 w-6 h-6 rounded-full border-2 border-blue-500/50 pointer-events-none z-[9999] mix-blend-difference"
-        style={{
-          x: cursorXSpring,
-          y: cursorYSpring,
-          translateX: '-50%',
-          translateY: '-50%',
-        }}
-      >
-        <motion.div
-          className="w-full h-full rounded-full bg-blue-500/30"
-          animate={{
-            scale: isMoving ? [1, 1.5, 1] : 1,
-          }}
-          transition={{ duration: 0.3 }}
-        />
-      </motion.div>
+      {/* Custom cursor - removed due to delay, using standard cursor */}
 
       {/* Trail particles */}
       {particles.map((particle, index) => (

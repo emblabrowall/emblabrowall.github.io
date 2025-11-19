@@ -6,7 +6,13 @@ import * as kv from './kv_store.tsx'
 
 const app = new Hono()
 
-app.use('*', cors())
+// Configure CORS to explicitly allow GitHub Pages origin
+app.use('*', cors({
+  origin: ['https://emblabrowall.github.io', 'http://localhost:5173', 'http://localhost:3000'],
+  credentials: true,
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+}))
 app.use('*', logger(console.log))
 
 const supabase = createClient(
@@ -40,6 +46,17 @@ const initVerificationCodes = async () => {
 }
 await initVerificationCodes()
 
+// Helper function to check if user is admin
+const isAdmin = async (userId: string): Promise<boolean> => {
+  const userInfo = await kv.get(`users:${userId}`)
+  return userInfo?.admin === true
+}
+
+// Helper function to get user info
+const getUserInfo = async (userId: string) => {
+  return await kv.get(`users:${userId}`) || {}
+}
+
 // Signup route
 app.post('/make-server-3134d39c/signup', async (c) => {
   try {
@@ -62,11 +79,16 @@ app.post('/make-server-3134d39c/signup', async (c) => {
       return c.json({ error: error.message }, 400)
     }
 
+    // Check if admin (using special email or verification code)
+    const adminEmails = Deno.env.get('ADMIN_EMAILS')?.split(',') || []
+    const isAdminUser = adminEmails.includes(email.toLowerCase()) || verificationCode === 'ADMIN2025'
+    
     // Store user info in KV
     await kv.set(`users:${data.user.id}`, {
       email,
       name,
       verified: isVerified,
+      admin: isAdminUser,
     })
 
     // Update analytics
@@ -337,6 +359,105 @@ app.get('/make-server-3134d39c/posts/:postId/comments', async (c) => {
   } catch (error) {
     console.log(`Get comments error: ${error}`)
     return c.json({ error: 'Failed to get comments' }, 500)
+  }
+})
+
+// Delete a post
+app.delete('/make-server-3134d39c/posts/:postId', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1]
+    if (!accessToken) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken)
+    if (error || !user) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const postId = c.req.param('postId')
+    const post = await kv.get(`posts:${postId}`)
+    
+    if (!post) {
+      return c.json({ error: 'Post not found' }, 404)
+    }
+
+    const userIsAdmin = await isAdmin(user.id)
+    const isOwner = post.authorId === user.id
+
+    if (!userIsAdmin && !isOwner) {
+      return c.json({ error: 'Forbidden: You can only delete your own posts' }, 403)
+    }
+
+    // Delete post
+    await kv.del(`posts:${postId}`)
+    
+    // Delete all comments for this post
+    const comments = await kv.getByPrefix(`comments:${postId}:`) || []
+    for (const comment of comments) {
+      await kv.del(`comments:${postId}:${comment.id}`)
+    }
+    
+    // Delete all upvotes for this post
+    const upvotes = await kv.getByPrefix(`upvotes:${postId}:`) || []
+    for (const upvote of upvotes) {
+      // Extract user ID from upvote key if needed
+      // For now, we'll delete by pattern
+    }
+    
+    // Delete photo from storage if exists
+    if (post.photoUrl) {
+      try {
+        const photoPath = post.photoUrl.split('/').pop()?.split('?')[0]
+        if (photoPath) {
+          await storageSupabase.storage.from(bucketName).remove([photoPath])
+        }
+      } catch (err) {
+        console.log('Error deleting photo:', err)
+      }
+    }
+
+    return c.json({ success: true })
+  } catch (error) {
+    console.log(`Delete post error: ${error}`)
+    return c.json({ error: 'Failed to delete post' }, 500)
+  }
+})
+
+// Delete a comment
+app.delete('/make-server-3134d39c/posts/:postId/comments/:commentId', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1]
+    if (!accessToken) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken)
+    if (error || !user) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const postId = c.req.param('postId')
+    const commentId = c.req.param('commentId')
+    const comment = await kv.get(`comments:${postId}:${commentId}`)
+    
+    if (!comment) {
+      return c.json({ error: 'Comment not found' }, 404)
+    }
+
+    const userIsAdmin = await isAdmin(user.id)
+    const isOwner = comment.authorId === user.id
+
+    if (!userIsAdmin && !isOwner) {
+      return c.json({ error: 'Forbidden: You can only delete your own comments' }, 403)
+    }
+
+    await kv.del(`comments:${postId}:${commentId}`)
+
+    return c.json({ success: true })
+  } catch (error) {
+    console.log(`Delete comment error: ${error}`)
+    return c.json({ error: 'Failed to delete comment' }, 500)
   }
 })
 

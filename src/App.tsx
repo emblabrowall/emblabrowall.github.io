@@ -9,6 +9,7 @@ import { AboutPage } from './components/AboutPage'
 import { ForumPage } from './components/ForumPage'
 import { ThreadView } from './components/ThreadView'
 import { CreateThreadForm } from './components/CreateThreadForm'
+import { CalendarPage } from './components/CalendarPage'
 import { CursorTrail } from './components/CursorTrail'
 import { SoundEffects } from './components/SoundEffects'
 import { KeyboardShortcuts } from './components/KeyboardShortcuts'
@@ -189,12 +190,13 @@ export default function App() {
       
       case 'calendar':
         return (
-          <PostListPage
-            category="calendar"
-            title="📅 Calendar"
-            description="Important dates, events, and deadlines for exchange students"
+          <CalendarPage
             user={user}
             onLoginRequired={handleLogin}
+            onAddEvent={() => {
+              setCurrentPage('add-tip')
+              // Pre-select calendar category if possible
+            }}
           />
         )
       

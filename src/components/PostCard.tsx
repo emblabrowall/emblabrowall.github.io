@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ThumbsUp, Flag, MessageCircle, MapPin, Euro, Sparkle } from 'lucide-react'
+import { ThumbsUp, Flag, MessageCircle, MapPin, Euro, Sparkle, Trash2 } from 'lucide-react'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
 import { api } from '../utils/api'
@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react'
 
 interface Comment {
   id: string
+  authorId?: string
   authorName: string
   verified: boolean
   content: string
@@ -72,6 +73,38 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
         alert('Post reported. Moderators will review it.')
       } catch (error: any) {
         alert(error.error || 'Failed to report post')
+      }
+    }
+  }
+
+  const handleDeletePost = async () => {
+    if (!user) {
+      onLoginRequired()
+      return
+    }
+
+    if (confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      try {
+        await api.deletePost(post.id)
+        onPostUpdate()
+      } catch (error: any) {
+        alert(error.error || 'Failed to delete post')
+      }
+    }
+  }
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!user) {
+      onLoginRequired()
+      return
+    }
+
+    if (confirm('Are you sure you want to delete this comment?')) {
+      try {
+        await api.deleteComment(post.id, commentId)
+        setComments(comments.filter(c => c.id !== commentId))
+      } catch (error: any) {
+        alert(error.error || 'Failed to delete comment')
       }
     }
   }
@@ -235,7 +268,20 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
             {comments.length > 0 ? comments.length : 'Comment'}
           </Button>
         </motion.div>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="ml-auto">
+        {(user?.id === post.authorId || user?.admin) && (
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="ml-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDeletePost}
+              className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </Button>
+          </motion.div>
+        )}
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className={user?.id === post.authorId || user?.admin ? '' : 'ml-auto'}>
           <Button
             variant="ghost"
             size="sm"
@@ -280,6 +326,16 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
                       <span className="text-xs text-muted-foreground ml-auto">
                         {formatDate(comment.timestamp)}
                       </span>
+                      {(user?.id === comment.authorId || user?.admin) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                     <p className="text-sm">{comment.content}</p>
                   </motion.div>
