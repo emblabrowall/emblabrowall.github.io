@@ -81,7 +81,7 @@ app.post('/make-server-3134d39c/signup', async (c) => {
 
     // Check if admin (using special email or verification code)
     const adminEmails = Deno.env.get('ADMIN_EMAILS')?.split(',') || []
-    const isAdminUser = adminEmails.includes(email.toLowerCase()) || verificationCode === 'ADMIN2025'
+    const isAdminUser = adminEmails.includes(email.toLowerCase()) || verificationCode === 'Casapina2025'
     
     // Store user info in KV
     await kv.set(`users:${data.user.id}`, {
