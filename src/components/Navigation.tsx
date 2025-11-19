@@ -19,8 +19,10 @@ export function Navigation({ currentPage, onPageChange, user, onLoginClick, onLo
     { id: 'forum', label: 'Forum' },
     { id: 'courses', label: 'Courses' },
     { id: 'food', label: 'Food & Cafés' },
-    { id: 'clubs', label: 'Clubs & Bars' },
+    { id: 'clubs', label: 'Nightlife' },
     { id: 'activities', label: 'Activities' },
+    { id: 'trips', label: 'Trips' },
+    { id: 'calendar', label: 'Calendar' },
     { id: 'about', label: 'About' },
   ]
 

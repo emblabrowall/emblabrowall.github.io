@@ -1,4 +1,4 @@
-import { Search, BookOpen, Coffee, Music, Plane, PlusCircle, MessageSquare, Sparkles } from 'lucide-react'
+import { Search, BookOpen, Coffee, Music, Plane, PlusCircle, MessageSquare, Sparkles, Calendar } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { useState } from 'react'
@@ -47,17 +47,31 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
     },
     {
       id: 'clubs',
-      title: 'Clubs & Bars',
-      description: 'Nightlife, music, and student favorites',
+      title: 'Nightlife',
+      description: 'Clubs, bars, music, and student favorites',
       icon: Music,
       color: 'from-purple-400 to-indigo-400',
     },
     {
       id: 'activities',
-      title: 'Activities & Trips',
-      description: 'Padel, hiking, day trips to Biarritz',
+      title: 'Activities',
+      description: 'Padel, hiking, and outdoor activities',
       icon: Plane,
       color: 'from-green-400 to-teal-400',
+    },
+    {
+      id: 'trips',
+      title: 'Trips',
+      description: 'Day trips to Biarritz, Bilbao, and beyond',
+      icon: Plane,
+      color: 'from-emerald-400 to-cyan-400',
+    },
+    {
+      id: 'calendar',
+      title: 'Calendar',
+      description: 'Important dates and events',
+      icon: Calendar,
+      color: 'from-amber-400 to-orange-400',
     },
   ]
 

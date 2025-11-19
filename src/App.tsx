@@ -158,8 +158,8 @@ export default function App() {
         return (
           <PostListPage
             category="clubs"
-            title="🎉 Clubs & Bars"
-            description="Navigate Donosti's nightlife — opening hours, entry fees, music styles, and pro tips"
+            title="🎉 Nightlife"
+            description="Navigate Donosti's nightlife — clubs, bars, opening hours, entry fees, music styles, and pro tips"
             user={user}
             onLoginRequired={handleLogin}
           />
@@ -169,8 +169,30 @@ export default function App() {
         return (
           <PostListPage
             category="activities"
-            title="🏔️ Activities & Trips"
-            description="Padel courts, hiking trails, pintxo-pote routes, and day trips to Biarritz, Bilbao, and beyond"
+            title="🏔️ Activities"
+            description="Padel courts, hiking trails, pintxo-pote routes, and outdoor activities in and around Donosti"
+            user={user}
+            onLoginRequired={handleLogin}
+          />
+        )
+      
+      case 'trips':
+        return (
+          <PostListPage
+            category="trips"
+            title="✈️ Trips"
+            description="Day trips and travel recommendations to Biarritz, Bilbao, and other nearby destinations"
+            user={user}
+            onLoginRequired={handleLogin}
+          />
+        )
+      
+      case 'calendar':
+        return (
+          <PostListPage
+            category="calendar"
+            title="📅 Calendar"
+            description="Important dates, events, and deadlines for exchange students"
             user={user}
             onLoginRequired={handleLogin}
           />
