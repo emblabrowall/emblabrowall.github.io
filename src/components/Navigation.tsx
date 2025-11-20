@@ -124,7 +124,16 @@ export function Navigation({ currentPage, onPageChange, user, onLoginClick, onLo
                 >
                   <User className="h-4 w-4 text-blue-600" />
                   <span className="text-sm">{user.name}</span>
-                  {user.verified && (
+                  {user.admin ? (
+                    <motion.span
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-800 border border-purple-300"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.2, type: 'spring' }}
+                    >
+                      Admin
+                    </motion.span>
+                  ) : user.verified ? (
                     <motion.span
                       className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 border border-blue-300"
                       initial={{ scale: 0 }}
@@ -132,6 +141,15 @@ export function Navigation({ currentPage, onPageChange, user, onLoginClick, onLo
                       transition={{ delay: 0.2, type: 'spring' }}
                     >
                       ✓ Verified
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700 border border-gray-300"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.2, type: 'spring' }}
+                    >
+                      Unverified
                     </motion.span>
                   )}
                 </motion.div>

@@ -195,51 +195,61 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
           </div>
           {/* Custom month grid */}
           <div className="rounded-xl border border-border p-4 bg-white">
-            <div className="grid grid-cols-7 text-xs font-medium text-muted-foreground mb-2">
+            <div className="flex text-xs font-medium text-muted-foreground mb-2">
               {daysOfWeek.map((day) => (
-                <div key={day} className="text-center tracking-wide">
+                <div key={day} className="flex-1 text-center tracking-wide">
                   {day}
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden text-xs">
-              {monthMatrix.map((week, weekIndex) =>
-                week.map((date, dayIndex) => {
-                  const key = `${weekIndex}-${dayIndex}`
-                  const isCurrentMonth =
-                    date.getMonth() === currentMonth.getMonth() &&
-                    date.getFullYear() === currentMonth.getFullYear()
-                  const dateKey = formatDateKey(date)
-                  const isSelected = dateKey === formatDateKey(selectedDate)
-                  const hasEvents = datesWithEventsSet.has(dateKey)
+            <div className="space-y-px bg-border rounded-lg overflow-hidden text-xs">
+              {monthMatrix.map((week, weekIndex) => (
+                <div key={weekIndex} className="flex bg-white">
+                  {week.map((date, dayIndex) => {
+                    const key = `${weekIndex}-${dayIndex}`
+                    const isCurrentMonth =
+                      date.getMonth() === currentMonth.getMonth() &&
+                      date.getFullYear() === currentMonth.getFullYear()
+                    const dateKey = formatDateKey(date)
+                    const isSelected = dateKey === formatDateKey(selectedDate)
+                    const hasEvents = datesWithEventsSet.has(dateKey)
 
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => handleSelectDate(date)}
-                      className={[
-                        'bg-white h-16 flex flex-col items-center justify-start px-1 pt-1',
-                        'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
-                        'transition-colors',
-                        !isCurrentMonth ? 'text-muted-foreground/40' : '',
-                        isSelected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'hover:bg-accent',
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                    >
-                      <span className="text-xs font-medium">{date.getDate()}</span>
-                      <span className="mt-auto mb-1 h-1.5 w-1.5 rounded-full">
-                        {hasEvents && !isSelected && (
-                          <span className="block h-1.5 w-1.5 rounded-full bg-blue-500" />
-                        )}
-                      </span>
-                    </button>
-                  )
-                })
-              )}
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => handleSelectDate(date)}
+                        className={[
+                          'flex-1 h-16 flex flex-col items-center justify-start px-1 pt-1',
+                          'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
+                          'transition-colors',
+                          !isCurrentMonth ? 'text-muted-foreground/40' : '',
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'hover:bg-accent',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        style={{
+                          borderRight:
+                            dayIndex < week.length - 1
+                              ? '1px solid var(--border)'
+                              : 'none',
+                        }}
+                      >
+                        <span className="text-xs font-medium">
+                          {date.getDate()}
+                        </span>
+                        <span className="mt-auto mb-1 h-1.5 w-1.5 rounded-full">
+                          {hasEvents && !isSelected && (
+                            <span className="block h-1.5 w-1.5 rounded-full bg-blue-500" />
+                          )}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
             </div>
           </div>
         </motion.div>
