@@ -3065,18 +3065,6 @@ html {
   font-size: var(--font-size);
 }
 
-body {
-  cursor: none;
-}
-
-button, a, input, textarea, select {
-  cursor: pointer;
-}
-
-input, textarea {
-  cursor: text;
-}
-
 @keyframes glow {
   0%, 100% {
     box-shadow: 0 0 20px #6366f14d, 0 0 40px #6366f11a;

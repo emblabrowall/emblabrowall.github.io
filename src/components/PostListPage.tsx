@@ -32,7 +32,7 @@ export function PostListPage({
   const [filterArea, setFilterArea] = useState('all')
   const [filterPrice, setFilterPrice] = useState('all')
   const [filterRating, setFilterRating] = useState('all')
-  const [filterExaminationTypes, setFilterExaminationTypes] = useState<string[]>([])
+  const [filterSemester, setFilterSemester] = useState('all')
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery)
   const [showAddTipForm, setShowAddTipForm] = useState(false)
 
@@ -95,11 +95,9 @@ export function PostListPage({
       if (!post.rating || post.rating < minRating) return false
     }
 
-    // Examination type filter (for courses)
-    if (category === 'courses' && filterExaminationTypes.length > 0) {
-      if (!post.examinationType || !filterExaminationTypes.includes(post.examinationType)) {
-        return false
-      }
+    // Semester filter (for courses)
+    if (category === 'courses' && filterSemester !== 'all') {
+      if (!post.semester || post.semester !== filterSemester) return false
     }
 
     return true
@@ -114,11 +112,7 @@ export function PostListPage({
     'Other',
   ]
 
-  const semesterOptions = category === 'courses' ? [
-    { value: 'all', label: 'All Semesters' },
-    { value: 'Fall', label: 'Fall Semester' },
-    { value: 'Spring', label: 'Spring Semester' },
-  ] : []
+  // For now we keep filters focused on what matters most per category.
 
   const handleAddTipSuccess = (cat: string) => {
     setShowAddTipForm(false)
@@ -261,17 +255,29 @@ export function PostListPage({
                 </SelectContent>
               </Select>
             ) : category === 'courses' ? (
-              <Select value={filterRating} onValueChange={setFilterRating}>
-                <SelectTrigger className="focus:ring-2 focus:ring-blue-500/20 transition-all">
-                  <SelectValue placeholder="All Ratings" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Ratings</SelectItem>
-                  <SelectItem value="4">4+ Stars</SelectItem>
-                  <SelectItem value="3">3+ Stars</SelectItem>
-                  <SelectItem value="2">2+ Stars</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Select value={filterSemester} onValueChange={setFilterSemester}>
+                  <SelectTrigger className="focus:ring-2 focus:ring-blue-500/20 transition-all">
+                    <SelectValue placeholder="All Semesters" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Semesters</SelectItem>
+                    <SelectItem value="1">Semester 1</SelectItem>
+                    <SelectItem value="2">Semester 2</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterRating} onValueChange={setFilterRating}>
+                  <SelectTrigger className="focus:ring-2 focus:ring-blue-500/20 transition-all">
+                    <SelectValue placeholder="All Ratings" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Ratings</SelectItem>
+                    <SelectItem value="4">4+ Stars</SelectItem>
+                    <SelectItem value="3">3+ Stars</SelectItem>
+                    <SelectItem value="2">2+ Stars</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             ) : category === 'activities' || category === 'trips' ? (
               <Select value={filterRating} onValueChange={setFilterRating}>
                 <SelectTrigger className="focus:ring-2 focus:ring-blue-500/20 transition-all">
@@ -288,47 +294,8 @@ export function PostListPage({
           </motion.div>
         </div>
 
-        {/* Examination Type Filter (for courses only) */}
-        {category === 'courses' && (
-          <motion.div
-            className="mt-4 p-4 bg-gray-50 rounded-lg border border-border"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-          >
-            <Label className="text-sm font-medium mb-3 block">Examination Type (Select multiple)</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {['seminars', 'written-assignments', 'exams'].map((type) => {
-                const displayName = type === 'written-assignments' ? 'Written Assignments' : 
-                                   type === 'seminars' ? 'Seminars' : 'Exams'
-                return (
-                  <div key={type} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`exam-${type}`}
-                      checked={filterExaminationTypes.includes(type)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setFilterExaminationTypes([...filterExaminationTypes, type])
-                        } else {
-                          setFilterExaminationTypes(filterExaminationTypes.filter(t => t !== type))
-                        }
-                      }}
-                    />
-                    <Label
-                      htmlFor={`exam-${type}`}
-                      className="text-sm font-normal cursor-pointer"
-                    >
-                      {displayName}
-                    </Label>
-                  </div>
-                )
-              })}
-            </div>
-          </motion.div>
-        )}
-
         {/* Active filters count */}
-        {(filterArea !== 'all' || filterPrice !== 'all' || filterRating !== 'all' || localSearchQuery || filterExaminationTypes.length > 0) && (
+        {(filterArea !== 'all' || filterPrice !== 'all' || filterRating !== 'all' || (category === 'courses' && filterSemester !== 'all') || localSearchQuery) && (
           <motion.div
             className="mt-4 flex items-center gap-2"
             initial={{ opacity: 0, height: 0 }}
@@ -343,7 +310,7 @@ export function PostListPage({
                 setFilterArea('all')
                 setFilterPrice('all')
                 setFilterRating('all')
-                setFilterExaminationTypes([])
+                setFilterSemester('all')
                 setLocalSearchQuery('')
               }}
               className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors"

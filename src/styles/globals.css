@@ -188,20 +188,6 @@ html {
   font-size: var(--font-size);
 }
 
-/* Hide default cursor for custom cursor trail */
-body {
-  cursor: none;
-}
-
-/* Show cursor on interactive elements */
-button, a, input, textarea, select {
-  cursor: pointer;
-}
-
-input, textarea {
-  cursor: text;
-}
-
 /* High-tech futuristic effects */
 @keyframes glow {
   0%, 100% {

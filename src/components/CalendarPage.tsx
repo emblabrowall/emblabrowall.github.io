@@ -124,35 +124,49 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                {selectedDate.toLocaleString('default', { month: 'long' })} {selectedDate.getFullYear()}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Tap a day to see events
+              </p>
+            </div>
+          </div>
           <Calendar
             mode="single"
             selected={selectedDate}
             onSelect={(date) => date && setSelectedDate(date)}
             modifiers={{
               hasEvents: getDatesWithEvents(),
+              selected: [selectedDate],
             }}
             modifiersClassNames={{
-              hasEvents: 'bg-blue-100 text-blue-700 font-semibold',
+              hasEvents: 'relative after:content-[""] after:w-1 after:h-1 after:rounded-full after:bg-blue-500 after:absolute after:bottom-1/2 after:left-1/2 after:-translate-x-1/2 after:translate-y-3',
             }}
-            className="rounded-md"
+            className="rounded-md border border-border p-4"
           />
         </motion.div>
 
         {/* Events for selected date */}
         <motion.div
-          className="bg-white rounded-2xl shadow-sm border border-border p-6"
+          className="bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <h3 className="mb-4">
-            {formatDate(selectedDate)}
+          <h3 className="mb-1 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            {formatDateShort(selectedDate)}
           </h3>
+          <p className="mb-4 text-base font-semibold">
+            {formatDate(selectedDate)}
+          </p>
           
           {loading ? (
             <p className="text-sm text-muted-foreground">Loading events...</p>
           ) : selectedDateEvents.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="text-center py-8 flex-1 flex flex-col justify-center">
               <p className="text-sm text-muted-foreground mb-4">
                 No events scheduled for this date
               </p>
@@ -169,31 +183,40 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
               )}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto">
               {selectedDateEvents.map((event) => (
                 <motion.div
                   key={event.id}
-                  className="p-4 rounded-lg border border-border bg-gradient-to-r from-blue-50/50 to-purple-50/50"
+                  className="p-4 rounded-xl border border-border bg-white shadow-sm"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <h4 className="font-semibold mb-2">{event.title}</h4>
-                  {event.time && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                      <Clock className="h-3 w-3" />
-                      {event.time}
-                    </div>
-                  )}
-                  {event.place && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                      <MapPin className="h-3 w-3" />
-                      {event.place}
-                    </div>
-                  )}
+                  <h4 className="font-semibold mb-1 text-sm">{event.title}</h4>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-1">
+                    {event.time && (
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {event.time}
+                      </span>
+                    )}
+                    {event.place && (
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {event.place}
+                      </span>
+                    )}
+                    {event.activityType && (
+                      <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] uppercase tracking-wide">
+                        {event.activityType}
+                      </span>
+                    )}
+                  </div>
                   {event.content && (
-                    <p className="text-sm text-muted-foreground mt-2">{event.content}</p>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-3">
+                      {event.content}
+                    </p>
                   )}
-                  <p className="text-xs text-muted-foreground mt-2">
+                  <p className="text-[11px] text-muted-foreground mt-2">
                     By {event.authorName}
                   </p>
                 </motion.div>

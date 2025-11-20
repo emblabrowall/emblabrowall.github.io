@@ -31,7 +31,7 @@ export function AddTipForm({ user, onSuccess, onLoginRequired, initialCategory }
   const [semester, setSemester] = useState('')
   const [ects, setEcts] = useState('')
   const [onlineOrCampus, setOnlineOrCampus] = useState('')
-  const [examinationType, setExaminationType] = useState('')
+  const [examinationTypes, setExaminationTypes] = useState<string[]>([])
   const [workload, setWorkload] = useState('')
   const [overallScore, setOverallScore] = useState('')
 
@@ -117,7 +117,7 @@ export function AddTipForm({ user, onSuccess, onLoginRequired, initialCategory }
     setSemester('')
     setEcts('')
     setOnlineOrCampus('')
-    setExaminationType('')
+    setExaminationTypes([])
     setWorkload('')
     setOverallScore('')
     setRestaurantName('')
@@ -182,7 +182,7 @@ export function AddTipForm({ user, onSuccess, onLoginRequired, initialCategory }
         postData.semester = semester || null
         postData.ects = ects || null
         postData.onlineOrCampus = onlineOrCampus || null
-        postData.examinationType = examinationType || null
+        postData.examinationType = examinationTypes.length > 0 ? examinationTypes : null
         postData.workload = workload || null
         postData.overallScore = overallScore || null
       } else if (category === 'food') {
@@ -280,16 +280,44 @@ export function AddTipForm({ user, onSuccess, onLoginRequired, initialCategory }
             </div>
             <div className="space-y-2">
               <Label htmlFor="examinationType">Examination Type *</Label>
-              <Select value={examinationType} onValueChange={setExaminationType} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select examination type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="seminars">Seminars</SelectItem>
-                  <SelectItem value="written-assignments">Written Assignments</SelectItem>
-                  <SelectItem value="exams">Exams</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {['seminars', 'written-assignments', 'exams'].map((type) => {
+                  const displayName =
+                    type === 'written-assignments'
+                      ? 'Written Assignments'
+                      : type === 'seminars'
+                      ? 'Seminars'
+                      : 'Exams'
+                  const isChecked = examinationTypes.includes(type)
+                  return (
+                    <div key={type} className="flex items-center space-x-2">
+                      <input
+                        id={`exam-${type}`}
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setExaminationTypes([...examinationTypes, type])
+                          } else {
+                            setExaminationTypes(
+                              examinationTypes.filter((t) => t !== type),
+                            )
+                          }
+                        }}
+                      />
+                      <Label
+                        htmlFor={`exam-${type}`}
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        {displayName}
+                      </Label>
+                    </div>
+                  )
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                You can select multiple examination types, for example both exam and seminar.
+              </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
