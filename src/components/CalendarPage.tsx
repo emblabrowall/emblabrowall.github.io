@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Calendar } from './ui/calendar'
 import { Button } from './ui/button'
-import { Plus, MapPin, Clock } from 'lucide-react'
+import { Plus, MapPin, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
 import { api } from '../utils/api'
 import { motion } from 'motion/react'
 // Helper function to format dates
@@ -18,6 +17,30 @@ const formatDateKey = (date: Date): string => {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+const daysOfWeek = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+
+const getMonthMatrix = (month: Date): Date[][] => {
+  const year = month.getFullYear()
+  const monthIndex = month.getMonth()
+
+  const firstOfMonth = new Date(year, monthIndex, 1)
+  const firstDayOfWeek = firstOfMonth.getDay() // 0 (Sun) - 6 (Sat)
+
+  const matrix: Date[][] = []
+  let current = new Date(year, monthIndex, 1 - firstDayOfWeek)
+
+  for (let week = 0; week < 6; week++) {
+    const weekRow: Date[] = []
+    for (let day = 0; day < 7; day++) {
+      weekRow.push(new Date(current))
+      current.setDate(current.getDate() + 1)
+    }
+    matrix.push(weekRow)
+  }
+
+  return matrix
 }
 
 interface CalendarEvent {
@@ -39,6 +62,7 @@ interface CalendarPageProps {
 
 export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPageProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -86,6 +110,23 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
     })
   }
 
+  const datesWithEventsSet = new Set(
+    getDatesWithEvents().map((date) => formatDateKey(date))
+  )
+
+  const monthMatrix = getMonthMatrix(currentMonth)
+
+  const handleMonthChange = (delta: number) => {
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1)
+    )
+  }
+
+  const handleSelectDate = (date: Date) => {
+    setSelectedDate(date)
+    setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1))
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -127,25 +168,80 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                {selectedDate.toLocaleString('default', { month: 'long' })} {selectedDate.getFullYear()}
+                {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
               </p>
               <p className="text-sm text-muted-foreground">
                 Tap a day to see events
               </p>
             </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => handleMonthChange(-1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => handleMonthChange(1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => date && setSelectedDate(date)}
-            modifiers={{
-              hasEvents: getDatesWithEvents(),
-            }}
-            modifiersClassNames={{
-              hasEvents: 'relative after:content-[""] after:w-1 after:h-1 after:rounded-full after:bg-blue-500 after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2',
-            }}
-            className="rounded-md border border-border p-4"
-          />
+          {/* Custom month grid */}
+          <div className="rounded-xl border border-border p-4 bg-white">
+            <div className="grid grid-cols-7 text-xs font-medium text-muted-foreground mb-2">
+              {daysOfWeek.map((day) => (
+                <div key={day} className="text-center tracking-wide">
+                  {day}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden text-xs">
+              {monthMatrix.map((week, weekIndex) =>
+                week.map((date, dayIndex) => {
+                  const key = `${weekIndex}-${dayIndex}`
+                  const isCurrentMonth =
+                    date.getMonth() === currentMonth.getMonth() &&
+                    date.getFullYear() === currentMonth.getFullYear()
+                  const dateKey = formatDateKey(date)
+                  const isSelected = dateKey === formatDateKey(selectedDate)
+                  const hasEvents = datesWithEventsSet.has(dateKey)
+
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleSelectDate(date)}
+                      className={[
+                        'bg-white h-16 flex flex-col items-center justify-start px-1 pt-1',
+                        'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
+                        'transition-colors',
+                        !isCurrentMonth ? 'text-muted-foreground/40' : '',
+                        isSelected
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-accent',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
+                      <span className="text-xs font-medium">{date.getDate()}</span>
+                      <span className="mt-auto mb-1 h-1.5 w-1.5 rounded-full">
+                        {hasEvents && !isSelected && (
+                          <span className="block h-1.5 w-1.5 rounded-full bg-blue-500" />
+                        )}
+                      </span>
+                    </button>
+                  )
+                })
+              )}
+            </div>
+          </div>
         </motion.div>
 
         {/* Events for selected date */}

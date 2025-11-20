@@ -261,7 +261,7 @@ export function PostListPage({
                 </SelectContent>
               </Select>
             ) : category === 'courses' ? (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Select value={filterSemester} onValueChange={setFilterSemester}>
                   <SelectTrigger className="focus:ring-2 focus:ring-blue-500/20 transition-all">
                     <SelectValue placeholder="All Semesters" />
