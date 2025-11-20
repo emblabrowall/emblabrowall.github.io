@@ -113,6 +113,10 @@ export function PostListPage({
   ]
 
   // For now we keep filters focused on what matters most per category.
+  const hasAreaFilter = category === 'food' || category === 'clubs'
+  const filtersGridCols = hasAreaFilter
+    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'
+    : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
 
   const handleAddTipSuccess = (cat: string) => {
     setShowAddTipForm(false)
@@ -194,7 +198,7 @@ export function PostListPage({
           <h3>Filters</h3>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={filtersGridCols}>
           {/* Search within category */}
           <motion.div
             className="lg:col-span-2"
