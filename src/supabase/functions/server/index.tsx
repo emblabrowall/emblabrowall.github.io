@@ -133,8 +133,8 @@ app.get('/make-server-3134d39c/user', async (c) => {
   }
 })
 
-// Verify or upgrade user (student verification or admin)
-app.post('/make-server-3134d39c/verify-code', async (c) => {
+// Shared handler to verify or upgrade user (student verification or admin)
+const handleVerifyCode = async (c: any) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1]
     if (!accessToken) {
@@ -193,7 +193,12 @@ app.post('/make-server-3134d39c/verify-code', async (c) => {
     console.log(`Verify code error: ${error}`)
     return c.json({ error: 'Failed to verify code' }, 500)
   }
-})
+}
+
+// Verify or upgrade user (student verification or admin)
+app.post('/make-server-3134d39c/verify-code', handleVerifyCode)
+// Also support calls without the function-name prefix (for safety)
+app.post('/verify-code', handleVerifyCode)
 
 // Create a new post/tip
 app.post('/make-server-3134d39c/posts', async (c) => {
