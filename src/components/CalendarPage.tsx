@@ -140,10 +140,9 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
             onSelect={(date) => date && setSelectedDate(date)}
             modifiers={{
               hasEvents: getDatesWithEvents(),
-              selected: [selectedDate],
             }}
             modifiersClassNames={{
-              hasEvents: 'relative after:content-[""] after:w-1 after:h-1 after:rounded-full after:bg-blue-500 after:absolute after:bottom-1/2 after:left-1/2 after:-translate-x-1/2 after:translate-y-3',
+              hasEvents: 'relative after:content-[""] after:w-1 after:h-1 after:rounded-full after:bg-blue-500 after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2',
             }}
             className="rounded-md border border-border p-4"
           />

@@ -78,8 +78,8 @@ export function PostListPage({
       if (!matchesSearch) return false
     }
 
-    // Area filter
-    if (filterArea !== 'all' && post.area !== filterArea) {
+    // Area filter (only for food & clubs where location makes sense)
+    if ((category === 'food' || category === 'clubs') && filterArea !== 'all' && post.area !== filterArea) {
       return false
     }
 
@@ -214,26 +214,28 @@ export function PostListPage({
             </div>
           </motion.div>
 
-          {/* Area filter */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.25 }}
-          >
-            <Select value={filterArea} onValueChange={setFilterArea}>
-              <SelectTrigger className="focus:ring-2 focus:ring-blue-500/20 transition-all">
-                <SelectValue placeholder="All Areas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Areas</SelectItem>
-                {neighborhoods.map((area) => (
-                  <SelectItem key={area} value={area}>
-                    {area}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </motion.div>
+          {/* Area filter (only for food & clubs) */}
+          {(category === 'food' || category === 'clubs') && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25 }}
+            >
+              <Select value={filterArea} onValueChange={setFilterArea}>
+                <SelectTrigger className="focus:ring-2 focus:ring-blue-500/20 transition-all">
+                  <SelectValue placeholder="All Areas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Areas</SelectItem>
+                  {neighborhoods.map((area) => (
+                    <SelectItem key={area} value={area}>
+                      {area}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </motion.div>
+          )}
 
           {/* Dynamic filter based on category */}
           <motion.div
