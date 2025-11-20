@@ -73,18 +73,24 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
   const loadEvents = async () => {
     setLoading(true)
     try {
-      const { posts } = await api.getPosts('calendar')
-      // Transform posts to calendar events
-      const calendarEvents: CalendarEvent[] = (posts || []).map((post: any) => ({
-        id: post.id,
-        title: post.title,
-        date: post.time || post.timestamp,
-        time: post.time,
-        place: post.place,
-        activityType: post.activityType,
-        content: post.content,
-        authorName: post.authorName,
-      }))
+      const { posts } = await api.getPosts('trips')
+      // Transform trips to calendar events (one event per selected trip date)
+      const calendarEvents: CalendarEvent[] = (posts || []).flatMap((post: any) => {
+        const dates: string[] = Array.isArray(post.tripDates) && post.tripDates.length > 0
+          ? post.tripDates
+          : [post.timestamp]
+
+        return dates.map((d, index) => ({
+          id: `${post.id}-${index}`,
+          title: post.title,
+          date: d,
+          time: post.travelTime,
+          place: post.cityName,
+          activityType: 'trip',
+          content: post.content,
+          authorName: post.authorName,
+        }))
+      })
       setEvents(calendarEvents)
     } catch (error) {
       console.error('Error loading events:', error)
@@ -140,10 +146,10 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
         
         <div className="relative z-10 flex items-center justify-between">
           <div>
-            <h1 className="mb-3">📅 Calendar</h1>
-            <p className="text-muted-foreground">
-              View upcoming trips, activities, and important dates
-            </p>
+            <h1 className="mb-3">📅 Trips Calendar</h1>
+              <p className="text-muted-foreground">
+                View upcoming trips and important dates
+              </p>
           </div>
           {user && (
             <Button
@@ -151,7 +157,7 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Event
+              Add Trip
             </Button>
           )}
         </div>

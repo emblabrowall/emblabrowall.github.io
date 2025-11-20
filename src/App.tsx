@@ -24,6 +24,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null)
   const [soundEnabled, setSoundEnabled] = useState(false)
+  const [initialAddTipCategory, setInitialAddTipCategory] = useState<string | undefined>()
 
   useEffect(() => {
     checkAuth()
@@ -70,6 +71,7 @@ export default function App() {
     toast.success('Tip posted successfully! Thank you for contributing! 🙌')
     // Navigate to the category page to see the newly added tip
     setCurrentPage(category)
+    setInitialAddTipCategory(undefined)
   }
 
   const handleViewThread = (threadId: string) => {
@@ -195,7 +197,7 @@ export default function App() {
             onLoginRequired={handleLogin}
             onAddEvent={() => {
               setCurrentPage('add-tip')
-              // Pre-select calendar category if possible
+              setInitialAddTipCategory('trips')
             }}
           />
         )
@@ -218,6 +220,7 @@ export default function App() {
             user={user}
             onSuccess={handleAddTipSuccess}
             onLoginRequired={handleLogin}
+            initialCategory={initialAddTipCategory}
           />
         )
       

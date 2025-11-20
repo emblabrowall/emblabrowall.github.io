@@ -50,6 +50,21 @@ export const api = {
     return data.user || null
   },
 
+  async verifyUser(code: string) {
+    const session = await this.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    const response = await fetch(`${API_URL}/verify-code`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ code }),
+    })
+    return response.json()
+  },
+
   async createPost(postData: any) {
     const session = await this.getSession()
     if (!session) throw new Error('Not authenticated')

@@ -61,6 +61,8 @@ export function AddTipForm({ user, onSuccess, onLoginRequired, initialCategory }
   const [travelTime, setTravelTime] = useState('')
   const [tripPrice, setTripPrice] = useState('')
   const [tripRating, setTripRating] = useState('')
+const [tripDates, setTripDates] = useState<string[]>([])
+const [tripDateInput, setTripDateInput] = useState('')
 
   // Calendar fields
   const [calendarTime, setCalendarTime] = useState('')
@@ -139,6 +141,8 @@ export function AddTipForm({ user, onSuccess, onLoginRequired, initialCategory }
     setTravelTime('')
     setTripPrice('')
     setTripRating('')
+  setTripDates([])
+  setTripDateInput('')
     setCalendarTime('')
     setCalendarPlace('')
     setCalendarActivityType('')
@@ -157,6 +161,11 @@ export function AddTipForm({ user, onSuccess, onLoginRequired, initialCategory }
 
     if (!category) {
       setError('Please select a category')
+      return
+    }
+
+    if (category === 'trips' && tripDates.length === 0) {
+      setError('Please add at least one date for your trip')
       return
     }
 
@@ -204,6 +213,7 @@ export function AddTipForm({ user, onSuccess, onLoginRequired, initialCategory }
         postData.travelTime = travelTime || null
         postData.price = tripPrice || null
         postData.overallRating = tripRating || null
+        postData.tripDates = tripDates
       } else if (category === 'calendar') {
         postData.time = calendarTime || null
         postData.place = calendarPlace || null
@@ -659,6 +669,49 @@ export function AddTipForm({ user, onSuccess, onLoginRequired, initialCategory }
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tripDate">Trip Dates *</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="tripDate"
+                  type="date"
+                  value={tripDateInput}
+                  onChange={(e) => setTripDateInput(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    if (tripDateInput && !tripDates.includes(tripDateInput)) {
+                      setTripDates([...tripDates, tripDateInput])
+                      setTripDateInput('')
+                    }
+                  }}
+                >
+                  Add date
+                </Button>
+              </div>
+              {tripDates.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {tripDates.map((date) => (
+                    <button
+                      key={date}
+                      type="button"
+                      onClick={() =>
+                        setTripDates(tripDates.filter((d) => d !== date))
+                      }
+                      className="text-xs px-2 py-1 rounded-full border border-border bg-accent hover:bg-accent/70"
+                      title="Click to remove"
+                    >
+                      {date}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                You can add one or more dates – each date will appear as a separate entry in the calendar.
+              </p>
             </div>
           </>
         )

@@ -81,7 +81,8 @@ app.post('/make-server-3134d39c/signup', async (c) => {
 
     // Check if admin (using special email or verification code)
     const adminEmails = Deno.env.get('ADMIN_EMAILS')?.split(',') || []
-    const isAdminUser = adminEmails.includes(email.toLowerCase()) || verificationCode === 'Casapina2025'
+    const isAdminUser =
+      adminEmails.includes(email.toLowerCase()) || verificationCode === 'CASAPINA2025'
     
     // Store user info in KV
     await kv.set(`users:${data.user.id}`, {
@@ -132,6 +133,68 @@ app.get('/make-server-3134d39c/user', async (c) => {
   }
 })
 
+// Verify or upgrade user (student verification or admin)
+app.post('/make-server-3134d39c/verify-code', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1]
+    if (!accessToken) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken)
+    if (error || !user) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const { code } = await c.req.json()
+    const trimmedCode = (code || '').toString().trim()
+    if (!trimmedCode) {
+      return c.json({ error: 'No code provided' }, 400)
+    }
+
+    const validCodes = await kv.get('verification-codes') || []
+    const adminCode = 'CASAPINA2025'
+
+    let userInfo = await getUserInfo(user.id)
+    let changed = false
+
+    if (validCodes.includes(trimmedCode) && !userInfo.verified) {
+      userInfo.verified = true
+      changed = true
+
+      const analytics = await kv.get('analytics') || { totalPosts: 0, verifiedUsers: 0, topSearches: {} }
+      analytics.verifiedUsers = (analytics.verifiedUsers || 0) + 1
+      await kv.set('analytics', analytics)
+    }
+
+    if (trimmedCode === adminCode && !userInfo.admin) {
+      userInfo.admin = true
+      changed = true
+    }
+
+    if (!changed) {
+      return c.json({ error: 'Invalid code or no change' }, 400)
+    }
+
+    await kv.set(`users:${user.id}`, {
+      ...(await kv.get(`users:${user.id}`)),
+      ...userInfo,
+    })
+
+    return c.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        ...userInfo,
+      },
+    })
+  } catch (error) {
+    console.log(`Verify code error: ${error}`)
+    return c.json({ error: 'Failed to verify code' }, 500)
+  }
+})
+
 // Create a new post/tip
 app.post('/make-server-3134d39c/posts', async (c) => {
   try {
@@ -146,7 +209,17 @@ app.post('/make-server-3134d39c/posts', async (c) => {
     }
 
     const userInfo = await kv.get(`users:${user.id}`)
-    const { title, category, area, price, rating, content, photoData } = await c.req.json()
+    const body = await c.req.json()
+    const {
+      title,
+      category,
+      area,
+      price,
+      rating,
+      content,
+      photoData,
+      ...extraFields
+    } = body
 
     const postId = `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
@@ -177,7 +250,7 @@ app.post('/make-server-3134d39c/posts', async (c) => {
       category,
       area,
       price,
-      rating: parseFloat(rating),
+      rating: rating !== undefined && rating !== null ? parseFloat(rating) : undefined,
       content,
       authorId: user.id,
       authorName: userInfo?.name || 'Anonymous',
@@ -186,6 +259,7 @@ app.post('/make-server-3134d39c/posts', async (c) => {
       photoUrl,
       upvotes: 0,
       reportCount: 0,
+      ...extraFields,
     }
 
     await kv.set(`posts:${postId}`, post)

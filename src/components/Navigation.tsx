@@ -2,6 +2,8 @@ import { Button } from './ui/button'
 import { Menu, X, LogOut, User, Zap, Calendar } from 'lucide-react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
+import { api } from '../utils/api'
+import { toast } from 'sonner@2.0.3'
 
 interface NavigationProps {
   currentPage: string
@@ -22,13 +24,30 @@ export function Navigation({ currentPage, onPageChange, user, onLoginClick, onLo
     { id: 'clubs', label: 'Nightlife' },
     { id: 'activities', label: 'Activities' },
     { id: 'trips', label: 'Trips' },
-    { id: 'calendar', label: 'Calendar' },
     { id: 'about', label: 'About' },
   ]
 
   const handleNavClick = (page: string) => {
     onPageChange(page)
     setMobileMenuOpen(false)
+  }
+
+  const handleStatusClick = async () => {
+    if (!user) return
+    const code = window.prompt('Enter verification or admin code:')
+    if (!code || !code.trim()) return
+
+    try {
+      const result = await api.verifyUser(code.trim())
+      if (result.error) {
+        toast.error(result.error || 'Code not valid')
+        return
+      }
+      toast.success('Status updated successfully. Reload the page to see changes.')
+    } catch (error) {
+      console.error('Error verifying user:', error)
+      toast.error('Failed to verify code')
+    }
   }
 
   return (
@@ -124,34 +143,41 @@ export function Navigation({ currentPage, onPageChange, user, onLoginClick, onLo
                 >
                   <User className="h-4 w-4 text-blue-600" />
                   <span className="text-sm">{user.name}</span>
-                  {user.admin ? (
-                    <motion.span
-                      className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-800 border border-purple-300"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.2, type: 'spring' }}
-                    >
-                      Admin
-                    </motion.span>
-                  ) : user.verified ? (
-                    <motion.span
-                      className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 border border-blue-300"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.2, type: 'spring' }}
-                    >
-                      ✓ Verified
-                    </motion.span>
-                  ) : (
-                    <motion.span
-                      className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700 border border-gray-300"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.2, type: 'spring' }}
-                    >
-                      Unverified
-                    </motion.span>
-                  )}
+                  <button
+                    type="button"
+                    onClick={handleStatusClick}
+                    className="focus:outline-none"
+                    title="Click to enter verification/admin code"
+                  >
+                    {user.admin ? (
+                      <motion.span
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-800 border border-purple-300"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2, type: 'spring' }}
+                      >
+                        Admin
+                      </motion.span>
+                    ) : user.verified ? (
+                      <motion.span
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 border border-blue-300"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2, type: 'spring' }}
+                      >
+                        ✓ Verified
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700 border border-gray-300"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2, type: 'spring' }}
+                      >
+                        Unverified
+                      </motion.span>
+                    )}
+                  </button>
                 </motion.div>
                 <Button variant="ghost" size="sm" onClick={onLogout}>
                   <LogOut className="h-4 w-4" />
@@ -214,7 +240,7 @@ export function Navigation({ currentPage, onPageChange, user, onLoginClick, onLo
                 ))}
                 <motion.button
                   onClick={() => handleNavClick('calendar')}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition-colors mb-2 ${
+                  className={`w-full px-3 py-2 rounded-lg transition-colors mb-2 flex items-center justify-center ${
                     currentPage === 'calendar'
                       ? 'bg-accent text-accent-foreground'
                       : 'hover:bg-accent/50'
@@ -223,11 +249,9 @@ export function Navigation({ currentPage, onPageChange, user, onLoginClick, onLo
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.25 }}
                   whileTap={{ scale: 0.98 }}
+                  title="Calendar"
                 >
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Calendar
-                  </div>
+                  <Calendar className="h-4 w-4" />
                 </motion.button>
                 <motion.div
                   className="pt-4 border-t border-border mt-4"
@@ -240,11 +264,26 @@ export function Navigation({ currentPage, onPageChange, user, onLoginClick, onLo
                       <div className="flex items-center gap-2 px-3 py-2 bg-accent rounded-lg mb-2">
                         <User className="h-4 w-4" />
                         <span>{user.name}</span>
-                        {user.verified && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
-                            ✓ Verified
-                          </span>
-                        )}
+                        <button
+                          type="button"
+                          onClick={handleStatusClick}
+                          className="focus:outline-none"
+                          title="Click to enter verification/admin code"
+                        >
+                          {user.admin ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-800">
+                              Admin
+                            </span>
+                          ) : user.verified ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                              ✓ Verified
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">
+                              Unverified
+                            </span>
+                          )}
+                        </button>
                       </div>
                       <Button variant="outline" className="w-full" onClick={onLogout}>
                         <LogOut className="h-4 w-4 mr-2" />
