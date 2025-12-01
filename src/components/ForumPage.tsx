@@ -217,6 +217,7 @@ export function ForumPage({ user, onLoginRequired, onCreateThread, onViewThread 
                       </>
                     )}
                   </div>
+                  </div>
                 </div>
               </button>
               {/* Delete button for admin or owner */}
