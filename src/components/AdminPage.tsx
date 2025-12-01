@@ -194,7 +194,7 @@ export function AdminPage({ user, onLoginRequired }: AdminPageProps) {
           placeholder="Search users by name, email, or ID..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 pr-4"
+          className="pl-11"
         />
       </div>
 

@@ -933,7 +933,8 @@ app.get('/make-server-3134d39c/forum/replies/:replyId/upvote-status', async (c) 
 })
 
 // Delete a thread (admin or owner)
-app.delete('/make-server-3134d39c/forum/threads/:threadId', async (c) => {
+// Delete thread handler
+const handleDeleteThread = async (c: any) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1]
     if (!accessToken) {
@@ -980,10 +981,14 @@ app.delete('/make-server-3134d39c/forum/threads/:threadId', async (c) => {
     console.log(`Delete thread error: ${error}`)
     return c.json({ error: 'Failed to delete thread' }, 500)
   }
-})
+}
 
-// Delete a reply (admin or owner)
-app.delete('/make-server-3134d39c/forum/replies/:replyId', async (c) => {
+// Delete thread - support both route patterns
+app.delete('/forum/threads/:threadId', handleDeleteThread)
+app.delete('/make-server-3134d39c/forum/threads/:threadId', handleDeleteThread)
+
+// Delete reply handler
+const handleDeleteReply = async (c: any) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1]
     if (!accessToken) {
@@ -1029,12 +1034,16 @@ app.delete('/make-server-3134d39c/forum/replies/:replyId', async (c) => {
     console.log(`Delete reply error: ${error}`)
     return c.json({ error: 'Failed to delete reply' }, 500)
   }
-})
+}
+
+// Delete reply - support both route patterns
+app.delete('/forum/replies/:replyId', handleDeleteReply)
+app.delete('/make-server-3134d39c/forum/replies/:replyId', handleDeleteReply)
 
 // ============== ADMIN ROUTES ==============
 
-// Get all users (admin only)
-app.get('/make-server-3134d39c/admin/users', async (c) => {
+// Handler for getting all users (admin only)
+const handleGetAllUsers = async (c: any) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1]
     if (!accessToken) {
@@ -1101,10 +1110,14 @@ app.get('/make-server-3134d39c/admin/users', async (c) => {
     console.log(`Get all users error: ${error}`)
     return c.json({ error: 'Failed to get users' }, 500)
   }
-})
+}
 
-// Delete a user (admin only)
-app.delete('/make-server-3134d39c/admin/users/:userId', async (c) => {
+// Get all users (admin only) - support both route patterns
+app.get('/admin/users', handleGetAllUsers)
+app.get('/make-server-3134d39c/admin/users', handleGetAllUsers)
+
+// Handler for deleting a user (admin only)
+const handleDeleteUser = async (c: any) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1]
     if (!accessToken) {
@@ -1187,6 +1200,10 @@ app.delete('/make-server-3134d39c/admin/users/:userId', async (c) => {
     console.log(`Delete user error: ${error}`)
     return c.json({ error: 'Failed to delete user' }, 500)
   }
-})
+}
+
+// Delete a user (admin only) - support both route patterns
+app.delete('/admin/users/:userId', handleDeleteUser)
+app.delete('/make-server-3134d39c/admin/users/:userId', handleDeleteUser)
 
 Deno.serve(app.fetch)
