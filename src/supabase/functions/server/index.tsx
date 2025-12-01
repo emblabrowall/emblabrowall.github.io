@@ -441,6 +441,18 @@ app.get('/make-server-3134d39c/posts/:postId/comments', async (c) => {
   }
 })
 
+// Get comment count for a post
+app.get('/make-server-3134d39c/posts/:postId/comment-count', async (c) => {
+  try {
+    const postId = c.req.param('postId')
+    const comments = await kv.getByPrefix(`comments:${postId}:`) || []
+    return c.json({ count: comments.length })
+  } catch (error) {
+    console.log(`Get comment count error: ${error}`)
+    return c.json({ error: 'Failed to get comment count' }, 500)
+  }
+})
+
 // Delete a post
 app.delete('/make-server-3134d39c/posts/:postId', async (c) => {
   try {
@@ -856,7 +868,8 @@ app.post('/make-server-3134d39c/forum/replies/:replyId/helpful', async (c) => {
     }
 
     reply.helpful = !reply.helpful
-    await kv.set(replyItem.key, reply)
+    const replyKey = `replies:${reply.threadId}:${replyId}`
+    await kv.set(replyKey, reply)
 
     // Update thread solved status
     if (reply.helpful) {
@@ -916,6 +929,260 @@ app.get('/make-server-3134d39c/forum/replies/:replyId/upvote-status', async (c) 
   } catch (error) {
     console.log(`Get reply upvote status error: ${error}`)
     return c.json({ hasUpvoted: false })
+  }
+})
+
+// Delete a thread (admin or owner)
+app.delete('/make-server-3134d39c/forum/threads/:threadId', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1]
+    if (!accessToken) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken)
+    if (error || !user) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const threadId = c.req.param('threadId')
+    const thread = await kv.get(`threads:${threadId}`)
+    
+    if (!thread) {
+      return c.json({ error: 'Thread not found' }, 404)
+    }
+
+    const userIsAdmin = await isAdmin(user.id)
+    const isOwner = thread.authorId === user.id
+
+    if (!userIsAdmin && !isOwner) {
+      return c.json({ error: 'Forbidden: You can only delete your own threads' }, 403)
+    }
+
+    // Delete thread
+    await kv.del(`threads:${threadId}`)
+    
+    // Delete all replies for this thread
+    const replies = await kv.getByPrefix(`replies:${threadId}:`) || []
+    for (const reply of replies) {
+      await kv.del(`replies:${threadId}:${reply.id}`)
+    }
+    
+    // Delete all upvotes for this thread
+    const upvotes = await kv.getByPrefix(`thread-upvotes:${threadId}:`) || []
+    for (const upvote of upvotes) {
+      // Upvotes are stored as thread-upvotes:${threadId}:${userId}
+      // We'll need to delete them by pattern if needed
+    }
+
+    return c.json({ success: true })
+  } catch (error) {
+    console.log(`Delete thread error: ${error}`)
+    return c.json({ error: 'Failed to delete thread' }, 500)
+  }
+})
+
+// Delete a reply (admin or owner)
+app.delete('/make-server-3134d39c/forum/replies/:replyId', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1]
+    if (!accessToken) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken)
+    if (error || !user) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const replyId = c.req.param('replyId')
+    
+    // Find the reply - search through all replies to find matching ID
+    const allReplies = await kv.getByPrefix('replies:') || []
+    const reply = allReplies.find(r => r && r.id === replyId)
+    
+    if (!reply) {
+      return c.json({ error: 'Reply not found' }, 404)
+    }
+
+    const userIsAdmin = await isAdmin(user.id)
+    const isOwner = reply.authorId === user.id
+
+    if (!userIsAdmin && !isOwner) {
+      return c.json({ error: 'Forbidden: You can only delete your own replies' }, 403)
+    }
+
+    // Delete reply
+    const replyKey = `replies:${reply.threadId}:${replyId}`
+    await kv.del(replyKey)
+
+    // Update thread reply count
+    const thread = await kv.get(`threads:${reply.threadId}`)
+    if (thread) {
+      thread.replyCount = Math.max(0, (thread.replyCount || 0) - 1)
+      thread.lastActivity = new Date().toISOString()
+      await kv.set(`threads:${reply.threadId}`, thread)
+    }
+
+    return c.json({ success: true })
+  } catch (error) {
+    console.log(`Delete reply error: ${error}`)
+    return c.json({ error: 'Failed to delete reply' }, 500)
+  }
+})
+
+// ============== ADMIN ROUTES ==============
+
+// Get all users (admin only)
+app.get('/make-server-3134d39c/admin/users', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1]
+    if (!accessToken) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken)
+    if (error || !user) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const userIsAdmin = await isAdmin(user.id)
+    if (!userIsAdmin) {
+      return c.json({ error: 'Forbidden: Admin access required' }, 403)
+    }
+
+    // Get all users from KV store
+    const { data: kvData, error: kvError } = await supabase
+      .from('kv_store_3134d39c')
+      .select('key, value')
+      .like('key', 'users:%')
+
+    if (kvError) {
+      console.log(`Get users error: ${kvError}`)
+      return c.json({ error: 'Failed to get users' }, 500)
+    }
+
+    // Get all users from Supabase Auth to get emails
+    const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers()
+
+    if (authError) {
+      console.log(`Get auth users error: ${authError}`)
+      return c.json({ error: 'Failed to get auth users' }, 500)
+    }
+
+    // Combine KV store data with Auth data
+    const users = kvData.map((item) => {
+      const userId = item.key.replace('users:', '')
+      const userInfo = item.value || {}
+      const authUser = authUsers.find((u) => u.id === userId)
+
+      return {
+        id: userId,
+        email: authUser?.email || 'N/A',
+        name: userInfo.name || 'N/A',
+        verified: userInfo.verified || false,
+        admin: userInfo.admin || false,
+        createdAt: authUser?.created_at || null,
+      }
+    })
+
+    // Sort by creation date (newest first)
+    users.sort((a, b) => {
+      if (!a.createdAt) return 1
+      if (!b.createdAt) return -1
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+
+    return c.json({ users })
+  } catch (error) {
+    console.log(`Get all users error: ${error}`)
+    return c.json({ error: 'Failed to get users' }, 500)
+  }
+})
+
+// Delete a user (admin only)
+app.delete('/make-server-3134d39c/admin/users/:userId', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1]
+    if (!accessToken) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken)
+    if (error || !user) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const userIsAdmin = await isAdmin(user.id)
+    if (!userIsAdmin) {
+      return c.json({ error: 'Forbidden: Admin access required' }, 403)
+    }
+
+    const userId = c.req.param('userId')
+
+    // Prevent deleting yourself
+    if (userId === user.id) {
+      return c.json({ error: 'Cannot delete your own account' }, 400)
+    }
+
+    // Delete user from KV store
+    await kv.del(`users:${userId}`)
+
+    // Delete user's posts
+    const posts = await kv.getByPrefix('posts:') || []
+    const userPosts = posts.filter((post) => post.authorId === userId)
+    for (const post of userPosts) {
+      await kv.del(`posts:${post.id}`)
+      // Delete comments for this post
+      const comments = await kv.getByPrefix(`comments:${post.id}:`) || []
+      for (const comment of comments) {
+        await kv.del(`comments:${post.id}:${comment.id}`)
+      }
+      // Delete upvotes for this post
+      const upvotes = await kv.getByPrefix(`upvotes:${post.id}:`) || []
+      for (const upvote of upvotes) {
+        // Extract user ID from upvote key if needed
+        // For now, we'll just delete the post
+      }
+    }
+
+    // Delete user's comments
+    const allComments = await kv.getByPrefix('comments:') || []
+    const userComments = allComments.filter((comment) => comment.authorId === userId)
+    for (const comment of userComments) {
+      await kv.del(`comments:${comment.postId}:${comment.id}`)
+    }
+
+    // Delete user's threads
+    const threads = await kv.getByPrefix('threads:') || []
+    const userThreads = threads.filter((thread) => thread.authorId === userId)
+    for (const thread of userThreads) {
+      await kv.del(`threads:${thread.id}`)
+      // Delete replies for this thread
+      const replies = await kv.getByPrefix(`replies:${thread.id}:`) || []
+      for (const reply of replies) {
+        await kv.del(`replies:${thread.id}:${reply.id}`)
+      }
+    }
+
+    // Delete user's replies
+    const allReplies = await kv.getByPrefix('replies:') || []
+    const userReplies = allReplies.filter((reply) => reply.authorId === userId)
+    for (const reply of userReplies) {
+      await kv.del(`replies:${reply.threadId}:${reply.id}`)
+    }
+
+    // Delete user from Supabase Auth
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId)
+    if (deleteError) {
+      console.log(`Delete auth user error: ${deleteError}`)
+      // Continue even if auth deletion fails, as KV data is already deleted
+    }
+
+    return c.json({ success: true })
+  } catch (error) {
+    console.log(`Delete user error: ${error}`)
+    return c.json({ error: 'Failed to delete user' }, 500)
   }
 })
 

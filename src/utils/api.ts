@@ -319,4 +319,65 @@ export const api = {
     })
     return response.json()
   },
+
+  async getCommentCount(postId: string) {
+    const response = await fetch(`${API_URL}/posts/${postId}/comment-count`, {
+      headers: {
+        'Authorization': `Bearer ${publicAnonKey}`,
+      },
+    })
+    return response.json()
+  },
+
+  async deleteThread(threadId: string) {
+    const session = await this.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    const response = await fetch(`${API_URL}/forum/threads/${threadId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    })
+    return response.json()
+  },
+
+  async deleteReply(replyId: string) {
+    const session = await this.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    const response = await fetch(`${API_URL}/forum/replies/${replyId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    })
+    return response.json()
+  },
+
+  // Admin APIs
+  async getAllUsers() {
+    const session = await this.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    const response = await fetch(`${API_URL}/admin/users`, {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    })
+    return response.json()
+  },
+
+  async deleteUser(userId: string) {
+    const session = await this.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    const response = await fetch(`${API_URL}/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    })
+    return response.json()
+  },
 }

@@ -10,6 +10,7 @@ import { ForumPage } from './components/ForumPage'
 import { ThreadView } from './components/ThreadView'
 import { CreateThreadForm } from './components/CreateThreadForm'
 import { CalendarPage } from './components/CalendarPage'
+import { AdminPage } from './components/AdminPage'
 import { CursorTrail } from './components/CursorTrail'
 import { SoundEffects } from './components/SoundEffects'
 import { KeyboardShortcuts } from './components/KeyboardShortcuts'
@@ -115,6 +116,7 @@ export default function App() {
             user={user}
             onBack={handleBackToForum}
             onLoginRequired={handleLogin}
+            onThreadDeleted={handleBackToForum}
           />
         ) : (
           <ForumPage
@@ -226,6 +228,14 @@ export default function App() {
       
       case 'about':
         return <AboutPage />
+      
+      case 'admin':
+        return (
+          <AdminPage
+            user={user}
+            onLoginRequired={handleLogin}
+          />
+        )
       
       default:
         return <HomePage onNavigate={setCurrentPage} onSearch={handleSearch} />

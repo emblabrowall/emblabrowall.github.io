@@ -3,7 +3,8 @@ import { api } from '../utils/api'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { MessageSquare, ThumbsUp, CheckCircle2, Search, PlusCircle } from 'lucide-react'
+import { MessageSquare, ThumbsUp, CheckCircle2, Search, PlusCircle, Trash2 } from 'lucide-react'
+import { toast } from 'sonner@2.0.3'
 
 interface ForumPageProps {
   user: any
@@ -31,6 +32,26 @@ export function ForumPage({ user, onLoginRequired, onCreateThread, onViewThread 
       console.error('Error loading threads:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteThread = async (threadId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirm('Are you sure you want to delete this thread? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const { error } = await api.deleteThread(threadId)
+      if (error) {
+        toast.error(error || 'Failed to delete thread')
+        return
+      }
+      toast.success('Thread deleted successfully')
+      loadThreads()
+    } catch (error: any) {
+      console.error('Error deleting thread:', error)
+      toast.error('Failed to delete thread')
     }
   }
 
@@ -138,35 +159,38 @@ export function ForumPage({ user, onLoginRequired, onCreateThread, onViewThread 
       ) : (
         <div className="space-y-4">
           {filteredThreads.map((thread) => (
-            <button
+            <div
               key={thread.id}
-              onClick={() => onViewThread(thread.id)}
-              className="w-full bg-white rounded-xl shadow-sm border border-border p-6 hover:shadow-md transition-all hover:-translate-y-0.5 text-left"
+              className="w-full bg-white rounded-xl shadow-sm border border-border p-6 hover:shadow-md transition-all hover:-translate-y-0.5 relative group"
             >
-              <div className="flex items-start gap-4">
-                {/* Left side - Stats */}
-                <div className="flex flex-col items-center gap-2 text-center min-w-[60px]">
-                  <div className="flex items-center gap-1 text-sm">
-                    <ThumbsUp className="h-4 w-4 text-muted-foreground" />
-                    <span>{thread.upvotes || 0}</span>
+              <button
+                onClick={() => onViewThread(thread.id)}
+                className="w-full text-left"
+              >
+                <div className="flex items-start gap-4">
+                  {/* Left side - Stats */}
+                  <div className="flex flex-col items-center gap-2 text-center min-w-[60px]">
+                    <div className="flex items-center gap-1 text-sm">
+                      <ThumbsUp className="h-4 w-4 text-muted-foreground" />
+                      <span>{thread.upvotes || 0}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm">
+                      <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                      <span>{thread.replyCount || 0}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 text-sm">
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                    <span>{thread.replyCount || 0}</span>
-                  </div>
-                </div>
 
-                {/* Main Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-2 mb-2">
-                    <h3 className="flex-1">{thread.title}</h3>
-                    {thread.solved && (
-                      <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded text-xs shrink-0">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Solved
-                      </span>
-                    )}
-                  </div>
+                  {/* Main Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-2 mb-2">
+                      <h3 className="flex-1">{thread.title}</h3>
+                      {thread.solved && (
+                        <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded text-xs shrink-0">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Solved
+                        </span>
+                      )}
+                    </div>
                   
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                     {thread.content}
@@ -195,7 +219,19 @@ export function ForumPage({ user, onLoginRequired, onCreateThread, onViewThread 
                   </div>
                 </div>
               </div>
-            </button>
+              {/* Delete button for admin or owner */}
+              {(user?.admin || user?.id === thread.authorId) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => handleDeleteThread(thread.id, e)}
+                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50"
+                  title="Delete thread"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           ))}
         </div>
       )}

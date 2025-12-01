@@ -1,5 +1,5 @@
 import { Button } from './ui/button'
-import { Menu, X, LogOut, User, Zap, Calendar } from 'lucide-react'
+import { Menu, X, LogOut, User, Zap, Calendar, Shield } from 'lucide-react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { api } from '../utils/api'
@@ -133,6 +133,22 @@ export function Navigation({ currentPage, onPageChange, user, onLoginClick, onLo
             >
               <Calendar className="h-5 w-5" />
             </motion.button>
+            {/* Admin Icon */}
+            {user?.admin && (
+              <motion.button
+                onClick={() => onPageChange('admin')}
+                className={`p-2 rounded-lg transition-all ${
+                  currentPage === 'admin'
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
+                    : 'hover:bg-accent/50'
+                }`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                title="Admin Panel"
+              >
+                <Shield className="h-5 w-5" />
+              </motion.button>
+            )}
             {user ? (
               <>
                 <motion.div
@@ -253,6 +269,24 @@ export function Navigation({ currentPage, onPageChange, user, onLoginClick, onLo
                 >
                   <Calendar className="h-4 w-4" />
                 </motion.button>
+                {user?.admin && (
+                  <motion.button
+                    onClick={() => handleNavClick('admin')}
+                    className={`w-full px-3 py-2 rounded-lg transition-colors mb-2 flex items-center justify-center gap-2 ${
+                      currentPage === 'admin'
+                        ? 'bg-accent text-accent-foreground'
+                        : 'hover:bg-accent/50'
+                    }`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                    whileTap={{ scale: 0.98 }}
+                    title="Admin Panel"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Admin
+                  </motion.button>
+                )}
                 <motion.div
                   className="pt-4 border-t border-border mt-4"
                   initial={{ opacity: 0 }}

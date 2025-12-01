@@ -27,6 +27,7 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
   const [upvotes, setUpvotes] = useState(post.upvotes || 0)
   const [showComments, setShowComments] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
+  const [commentCount, setCommentCount] = useState<number | null>(null)
   const [newComment, setNewComment] = useState('')
   const [loadingComments, setLoadingComments] = useState(false)
   const [submittingComment, setSubmittingComment] = useState(false)
@@ -35,7 +36,18 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
     if (user && post.id) {
       checkUpvoteStatus()
     }
+    // Load comment count on mount
+    loadCommentCount()
   }, [user, post.id])
+
+  const loadCommentCount = async () => {
+    try {
+      const { count } = await api.getCommentCount(post.id)
+      setCommentCount(count)
+    } catch (error) {
+      console.error('Error loading comment count:', error)
+    }
+  }
 
   const checkUpvoteStatus = async () => {
     try {
@@ -93,21 +105,6 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
     }
   }
 
-  const handleDeleteComment = async (commentId: string) => {
-    if (!user) {
-      onLoginRequired()
-      return
-    }
-
-    if (confirm('Are you sure you want to delete this comment?')) {
-      try {
-        await api.deleteComment(post.id, commentId)
-        setComments(comments.filter(c => c.id !== commentId))
-      } catch (error: any) {
-        alert(error.error || 'Failed to delete comment')
-      }
-    }
-  }
 
   const loadComments = async () => {
     if (comments.length > 0) {
@@ -119,6 +116,7 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
     try {
       const { comments: fetchedComments } = await api.getComments(post.id)
       setComments(fetchedComments)
+      setCommentCount(fetchedComments.length)
       setShowComments(true)
     } catch (error) {
       console.error('Error loading comments:', error)
@@ -140,11 +138,29 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
     try {
       const { comment } = await api.addComment(post.id, newComment)
       setComments([...comments, comment])
+      setCommentCount((commentCount || 0) + 1)
       setNewComment('')
     } catch (error) {
       console.error('Error submitting comment:', error)
     } finally {
       setSubmittingComment(false)
+    }
+  }
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!user) {
+      onLoginRequired()
+      return
+    }
+
+    if (confirm('Are you sure you want to delete this comment?')) {
+      try {
+        await api.deleteComment(post.id, commentId)
+        setComments(comments.filter(c => c.id !== commentId))
+        setCommentCount(Math.max(0, (commentCount || 0) - 1))
+      } catch (error: any) {
+        alert(error.error || 'Failed to delete comment')
+      }
     }
   }
 
@@ -265,7 +281,7 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
             className="gap-2"
           >
             <MessageCircle className="h-4 w-4" />
-            {comments.length > 0 ? comments.length : 'Comment'}
+            {commentCount !== null && commentCount > 0 ? commentCount : comments.length > 0 ? comments.length : 'Comment'}
           </Button>
         </motion.div>
         {(user?.id === post.authorId || user?.admin) && (

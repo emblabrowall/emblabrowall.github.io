@@ -109,65 +109,31 @@ export function AboutPage() {
 
       {/* Become a Moderator */}
       <div className="bg-white rounded-2xl shadow-sm border border-border p-8">
-        <h2 className="mb-4">Become a Moderator</h2>
+        <h2 className="mb-4">Become Site Owner</h2>
         <p className="text-muted-foreground mb-6">
-          Interested in helping maintain the quality of this guide? Moderators help review reported content, verify new users, and ensure the community stays helpful and respectful.
+          Interested in developing the website?
         </p>
         <p className="text-muted-foreground mb-6">
           If you're passionate about helping future exchange students and want to give back to the community, we'd love to hear from you!
         </p>
-        <Button>
-          <Mail className="h-4 w-4 mr-2" />
-          Contact Us to Moderate
+        <Button asChild>
+          <a href="mailto:incoming.donostia@deusto.es">
+            <Mail className="h-4 w-4 mr-2" />
+            Contact Us if Interested!
+          </a>
         </Button>
-      </div>
-
-      {/* Community */}
-      <div className="bg-white rounded-2xl shadow-sm border border-border p-8">
-        <h2 className="mb-4">Join the Community</h2>
-        <p className="text-muted-foreground mb-6">
-          Connect with other exchange students in San Sebastián through our social channels:
-        </p>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <a
-            href="https://www.facebook.com/groups/donostiexchange"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-accent transition-colors"
-          >
-            <Facebook className="h-6 w-6 text-blue-600" />
-            <div>
-              <div>Facebook Group</div>
-              <p className="text-sm text-muted-foreground">Join discussions</p>
-            </div>
-          </a>
-
-          <a
-            href="https://chat.whatsapp.com/donostiexchange"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 p-4 rounded-xl border border-border hover:bg-accent transition-colors"
-          >
-            <MessageCircle className="h-6 w-6 text-green-600" />
-            <div>
-              <div>WhatsApp Group</div>
-              <p className="text-sm text-muted-foreground">Chat with students</p>
-            </div>
-          </a>
-        </div>
       </div>
 
       {/* Contact */}
       <div className="bg-white rounded-2xl shadow-sm border border-border p-8">
         <h2 className="mb-4">Contact</h2>
         <p className="text-muted-foreground mb-4">
-          Have questions, suggestions, or want to report an issue? Get in touch with us:
+          Have questions or thoughts about the exchange? Get in touch with the University:
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
           <Button variant="outline" className="gap-2">
             <Mail className="h-4 w-4" />
-            donosti.exchange@gmail.com
+            incoming.donostia@deusto.es
           </Button>
         </div>
       </div>

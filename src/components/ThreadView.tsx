@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../utils/api'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
-import { ThumbsUp, ArrowLeft, CheckCircle2, Award } from 'lucide-react'
+import { ThumbsUp, ArrowLeft, CheckCircle2, Award, Trash2 } from 'lucide-react'
 import { toast } from 'sonner@2.0.3'
 
 interface ThreadViewProps {
@@ -10,10 +10,12 @@ interface ThreadViewProps {
   user: any
   onBack: () => void
   onLoginRequired: () => void
+  onThreadDeleted?: () => void
 }
 
 interface Reply {
   id: string
+  authorId?: string
   authorName: string
   verified: boolean
   content: string
@@ -22,7 +24,7 @@ interface Reply {
   helpful: boolean
 }
 
-export function ThreadView({ threadId, user, onBack, onLoginRequired }: ThreadViewProps) {
+export function ThreadView({ threadId, user, onBack, onLoginRequired, onThreadDeleted }: ThreadViewProps) {
   const [thread, setThread] = useState<any>(null)
   const [replies, setReplies] = useState<Reply[]>([])
   const [newReply, setNewReply] = useState('')
@@ -182,6 +184,49 @@ export function ThreadView({ threadId, user, onBack, onLoginRequired }: ThreadVi
     }
   }
 
+  const handleDeleteThread = async () => {
+    if (!confirm('Are you sure you want to delete this thread? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const { error } = await api.deleteThread(threadId)
+      if (error) {
+        toast.error(error || 'Failed to delete thread')
+        return
+      }
+      toast.success('Thread deleted successfully')
+      if (onThreadDeleted) {
+        onThreadDeleted()
+      } else {
+        onBack()
+      }
+    } catch (error: any) {
+      console.error('Error deleting thread:', error)
+      toast.error('Failed to delete thread')
+    }
+  }
+
+  const handleDeleteReply = async (replyId: string) => {
+    if (!confirm('Are you sure you want to delete this reply?')) {
+      return
+    }
+
+    try {
+      const { error } = await api.deleteReply(replyId)
+      if (error) {
+        toast.error(error || 'Failed to delete reply')
+        return
+      }
+      toast.success('Reply deleted successfully')
+      setReplies(replies.filter(r => r.id !== replyId))
+      loadThread() // Reload to update reply count
+    } catch (error: any) {
+      console.error('Error deleting reply:', error)
+      toast.error('Failed to delete reply')
+    }
+  }
+
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp)
     return date.toLocaleDateString('en-GB', { 
@@ -259,6 +304,17 @@ export function ThreadView({ threadId, user, onBack, onLoginRequired }: ThreadVi
                 <ThumbsUp className="h-4 w-4" />
                 {thread.upvotes || 0}
               </Button>
+              {(user?.admin || user?.id === thread.authorId) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDeleteThread}
+                  className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Thread
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -301,6 +357,17 @@ export function ThreadView({ threadId, user, onBack, onLoginRequired }: ThreadVi
                   <span className="text-xs text-muted-foreground ml-auto">
                     {formatDate(reply.timestamp)}
                   </span>
+                  {(user?.admin || user?.id === reply.authorId) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteReply(reply.id)}
+                      className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      title="Delete reply"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
 
                 <p className="text-foreground whitespace-pre-wrap mb-4">{reply.content}</p>
