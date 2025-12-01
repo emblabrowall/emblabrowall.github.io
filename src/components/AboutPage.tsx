@@ -116,11 +116,9 @@ export function AboutPage() {
         <p className="text-muted-foreground mb-6">
           If you're passionate about helping future exchange students and want to give back to the community, we'd love to hear from you!
         </p>
-        <Button asChild>
-          <a href="mailto:incoming.donostia@deusto.es">
-            <Mail className="h-4 w-4 mr-2" />
-            Contact Us if Interested!
-          </a>
+        <Button onClick={() => window.location.href = 'mailto:incoming.donostia@deusto.es'}>
+          <Mail className="h-4 w-4 mr-2" />
+          Contact Us if Interested!
         </Button>
       </div>
 
