@@ -190,9 +190,10 @@ export function ThreadView({ threadId, user, onBack, onLoginRequired, onThreadDe
     }
 
     try {
-      const { error } = await api.deleteThread(threadId)
-      if (error) {
-        toast.error(error || 'Failed to delete thread')
+      const result = await api.deleteThread(threadId)
+      if (result.error) {
+        toast.error(result.error || 'Failed to delete thread')
+        console.error('Delete thread error:', result.error)
         return
       }
       toast.success('Thread deleted successfully')
@@ -203,7 +204,7 @@ export function ThreadView({ threadId, user, onBack, onLoginRequired, onThreadDe
       }
     } catch (error: any) {
       console.error('Error deleting thread:', error)
-      toast.error('Failed to delete thread')
+      toast.error(error?.message || error?.error || 'Failed to delete thread')
     }
   }
 
@@ -213,9 +214,10 @@ export function ThreadView({ threadId, user, onBack, onLoginRequired, onThreadDe
     }
 
     try {
-      const { error } = await api.deleteReply(replyId)
-      if (error) {
-        toast.error(error || 'Failed to delete reply')
+      const result = await api.deleteReply(replyId)
+      if (result.error) {
+        toast.error(result.error || 'Failed to delete reply')
+        console.error('Delete reply error:', result.error)
         return
       }
       toast.success('Reply deleted successfully')
@@ -223,7 +225,7 @@ export function ThreadView({ threadId, user, onBack, onLoginRequired, onThreadDe
       loadThread() // Reload to update reply count
     } catch (error: any) {
       console.error('Error deleting reply:', error)
-      toast.error('Failed to delete reply')
+      toast.error(error?.message || error?.error || 'Failed to delete reply')
     }
   }
 

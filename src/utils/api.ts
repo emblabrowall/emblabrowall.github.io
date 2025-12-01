@@ -339,7 +339,11 @@ export const api = {
         'Authorization': `Bearer ${session.access_token}`,
       },
     })
-    return response.json()
+    const data = await response.json()
+    if (!response.ok) {
+      return { error: data.error || 'Failed to delete thread' }
+    }
+    return data
   },
 
   async deleteReply(replyId: string) {
@@ -352,7 +356,11 @@ export const api = {
         'Authorization': `Bearer ${session.access_token}`,
       },
     })
-    return response.json()
+    const data = await response.json()
+    if (!response.ok) {
+      return { error: data.error || 'Failed to delete reply' }
+    }
+    return data
   },
 
   // Admin APIs
@@ -360,12 +368,30 @@ export const api = {
     const session = await this.getSession()
     if (!session) throw new Error('Not authenticated')
 
-    const response = await fetch(`${API_URL}/admin/users`, {
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-    })
-    return response.json()
+    try {
+      const response = await fetch(`${API_URL}/admin/users`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      })
+      
+      if (!response.ok) {
+        let errorMessage = 'Failed to load users'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        }
+        return { error: errorMessage }
+      }
+      
+      const data = await response.json()
+      return data
+    } catch (error: any) {
+      console.error('getAllUsers error:', error)
+      return { error: error.message || 'Failed to load users' }
+    }
   },
 
   async deleteUser(userId: string) {
@@ -378,6 +404,10 @@ export const api = {
         'Authorization': `Bearer ${session.access_token}`,
       },
     })
-    return response.json()
+    const data = await response.json()
+    if (!response.ok) {
+      return { error: data.error || 'Failed to delete user' }
+    }
+    return data
   },
 }

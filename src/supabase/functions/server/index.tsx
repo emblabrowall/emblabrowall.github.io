@@ -1051,18 +1051,7 @@ app.get('/make-server-3134d39c/admin/users', async (c) => {
       return c.json({ error: 'Forbidden: Admin access required' }, 403)
     }
 
-    // Get all users from KV store
-    const { data: kvData, error: kvError } = await supabase
-      .from('kv_store_3134d39c')
-      .select('key, value')
-      .like('key', 'users:%')
-
-    if (kvError) {
-      console.log(`Get users error: ${kvError}`)
-      return c.json({ error: 'Failed to get users' }, 500)
-    }
-
-    // Get all users from Supabase Auth to get emails
+    // Get all users from Supabase Auth first (this is the source of truth)
     const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers()
 
     if (authError) {
@@ -1070,19 +1059,33 @@ app.get('/make-server-3134d39c/admin/users', async (c) => {
       return c.json({ error: 'Failed to get auth users' }, 500)
     }
 
-    // Combine KV store data with Auth data
-    const users = kvData.map((item) => {
-      const userId = item.key.replace('users:', '')
-      const userInfo = item.value || {}
-      const authUser = authUsers.find((u) => u.id === userId)
+    // Get all users from KV store for additional metadata
+    const { data: kvData, error: kvError } = await supabase
+      .from('kv_store_3134d39c')
+      .select('key, value')
+      .like('key', 'users:%')
 
+    // Create a map of KV store data for quick lookup
+    const kvUserMap = new Map()
+    if (kvData && !kvError) {
+      kvData.forEach((item) => {
+        const userId = item.key.replace('users:', '')
+        kvUserMap.set(userId, item.value || {})
+      })
+    }
+
+    // Combine Auth data with KV store data
+    // Start with all auth users, then enrich with KV store data
+    const users = authUsers.map((authUser) => {
+      const userInfo = kvUserMap.get(authUser.id) || {}
+      
       return {
-        id: userId,
-        email: authUser?.email || 'N/A',
-        name: userInfo.name || 'N/A',
-        verified: userInfo.verified || false,
+        id: authUser.id,
+        email: authUser.email || 'N/A',
+        name: userInfo.name || authUser.user_metadata?.name || 'N/A',
+        verified: userInfo.verified || authUser.user_metadata?.verified || false,
         admin: userInfo.admin || false,
-        createdAt: authUser?.created_at || null,
+        createdAt: authUser.created_at || null,
       }
     })
 

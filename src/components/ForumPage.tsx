@@ -42,16 +42,17 @@ export function ForumPage({ user, onLoginRequired, onCreateThread, onViewThread 
     }
 
     try {
-      const { error } = await api.deleteThread(threadId)
-      if (error) {
-        toast.error(error || 'Failed to delete thread')
+      const result = await api.deleteThread(threadId)
+      if (result.error) {
+        toast.error(result.error || 'Failed to delete thread')
+        console.error('Delete thread error:', result.error)
         return
       }
       toast.success('Thread deleted successfully')
       loadThreads()
     } catch (error: any) {
       console.error('Error deleting thread:', error)
-      toast.error('Failed to delete thread')
+      toast.error(error?.message || error?.error || 'Failed to delete thread')
     }
   }
 
