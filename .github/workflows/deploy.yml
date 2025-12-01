@@ -31,7 +31,14 @@ jobs:
         run: npm install
 
       - name: Build
-        run: npm run build
+        run: |
+          echo "Starting build..."
+          npm run build 2>&1 | tee build.log
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "Build failed. Showing last 50 lines of build.log:"
+            tail -50 build.log
+            exit 1
+          fi
 
       - name: Copy 404.html to build output
         run: |
