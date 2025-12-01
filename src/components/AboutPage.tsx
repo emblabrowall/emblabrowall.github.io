@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Mail, Users, FileText, TrendingUp, MessageCircle, Facebook } from 'lucide-react'
-import { Button } from './ui/button'
+import { Button, buttonVariants } from './ui/button'
 import { api } from '../utils/api'
+import { cn } from './ui/utils'
 
 export function AboutPage() {
   const [analytics, setAnalytics] = useState<any>(null)
@@ -116,10 +117,13 @@ export function AboutPage() {
         <p className="text-muted-foreground mb-6">
           If you're passionate about helping future exchange students and want to give back to the community, we'd love to hear from you!
         </p>
-        <Button onClick={() => window.location.href = 'mailto:incoming.donostia@deusto.es'}>
+        <a
+          href="mailto:incoming.donostia@deusto.es"
+          className={cn(buttonVariants())}
+        >
           <Mail className="h-4 w-4 mr-2" />
           Contact Us if Interested!
-        </Button>
+        </a>
       </div>
 
       {/* Contact */}
