@@ -199,12 +199,13 @@ const [tripDateInput, setTripDateInput] = useState('')
 
     try {
       const postData: any = {
+        // For courses, use courseName as title. For others, use the title field if provided, otherwise fall back to name
         title: category === 'courses' ? courseName : 
+              (title && title.trim()) ? title :
               category === 'food' ? restaurantName :
               category === 'clubs' ? name :
               category === 'activities' ? activityName :
-              category === 'trips' ? cityName :
-              category === 'calendar' ? title : title,
+              category === 'trips' ? cityName : title,
         category,
         content,
         photoData: photoPreview,
@@ -222,20 +223,24 @@ const [tripDateInput, setTripDateInput] = useState('')
         postData.workload = workload || null
         postData.overallScore = overallScore || null
       } else if (category === 'food') {
+        postData.restaurantName = restaurantName || null
         postData.price = price || null
         postData.foodCategory = foodCategory || null
         postData.atmosphereRating = atmosphereRating || null
         postData.foodRating = foodRating || null
       } else if (category === 'clubs') {
+        postData.name = name || null
         postData.musicStyle = musicStyle || null
         postData.type = type || null
         postData.price = entrancePrice || null
         postData.overallRating = overallRating || null
       } else if (category === 'activities') {
+        postData.activityName = activityName || null
         postData.price = activityPrice || null
         postData.location = location || null
         postData.overallRating = activityRating || null
       } else if (category === 'trips') {
+        postData.cityName = cityName || null
         postData.travelType = travelType || null
         postData.travelTime = travelTime || null
         postData.price = tripPrice || null
