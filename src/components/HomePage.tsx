@@ -1,4 +1,4 @@
-import { Search, BookOpen, Coffee, Music, Plane, PlusCircle, MessageSquare, Sparkles, Trophy, Star } from 'lucide-react'
+import { Search, BookOpen, Coffee, Music, Plane, PlusCircle, MessageSquare, Sparkles, Trophy, Star, Crown, X } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { useState, useEffect } from 'react'
@@ -6,6 +6,7 @@ import { api } from '../utils/api'
 import { ImageWithFallback } from './figma/ImageWithFallback'
 import { motion } from 'motion/react'
 import { ParallaxSection } from './ParallaxSection'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 
 interface HomePageProps {
   onNavigate: (page: string) => void
@@ -28,6 +29,7 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [contributors, setContributors] = useState<Contributor[]>([])
   const [loadingContributors, setLoadingContributors] = useState(true)
+  const [selectedContributor, setSelectedContributor] = useState<Contributor | null>(null)
 
   useEffect(() => {
     loadContributors()
@@ -324,11 +326,11 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   whileHover={{ y: -4 }}
                 >
-                  {/* Rank badge */}
+                  {/* Rank badge with crown for #1 */}
                   <div className="absolute top-3 right-3">
                     {index === 0 && (
-                      <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                        <Trophy className="h-4 w-4" />
+                      <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-yellow-500/50 ring-2 ring-yellow-300/50">
+                        <Crown className="h-5 w-5 fill-white" />
                       </div>
                     )}
                     {index === 1 && (
@@ -348,12 +350,21 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
                     )}
                   </div>
                   
-                  {/* Gradient accent line */}
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+                  {/* Gold gradient accent line for #1 */}
+                  {index === 0 ? (
+                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500"></div>
+                  ) : (
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+                  )}
                   
                   <div className="mt-2">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold text-lg">{contributor.name}</h3>
+                    <div className="flex items-center gap-2 mb-4">
+                      <button
+                        onClick={() => setSelectedContributor(contributor)}
+                        className="font-semibold text-lg hover:text-blue-600 transition-colors cursor-pointer text-left"
+                      >
+                        {contributor.name}
+                      </button>
                       {contributor.verified && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
                           <Star className="h-3 w-3 mr-1" />
@@ -362,31 +373,13 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
                       )}
                     </div>
                     
-                    <div className="space-y-1 text-sm text-muted-foreground mb-3">
-                      <div className="flex items-center justify-between">
-                        <span>Posts:</span>
-                        <span className="font-medium">{contributor.posts}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span>Comments:</span>
-                        <span className="font-medium">{contributor.comments}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span>Threads:</span>
-                        <span className="font-medium">{contributor.threads}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span>Replies:</span>
-                        <span className="font-medium">{contributor.replies}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="pt-3 border-t border-border">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">Total Score</span>
-                        <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    {/* Only show total score */}
+                    <div className="pt-2">
+                      <div className="flex items-center justify-center">
+                        <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                           {contributor.totalScore}
                         </span>
+                        <span className="ml-2 text-sm text-muted-foreground">points</span>
                       </div>
                     </div>
                   </div>
@@ -437,6 +430,60 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
         ))}
         </div>
       </ParallaxSection>
+
+      {/* Contributor Details Dialog */}
+      <Dialog open={!!selectedContributor} onOpenChange={(open) => !open && setSelectedContributor(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedContributor && (
+                <>
+                  {contributors.findIndex(c => c.userId === selectedContributor.userId) === 0 && (
+                    <Crown className="h-5 w-5 fill-yellow-500 text-yellow-500" />
+                  )}
+                  {selectedContributor.name}
+                  {selectedContributor.verified && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
+                      <Star className="h-3 w-3 mr-1" />
+                      Verified
+                    </span>
+                  )}
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedContributor && (
+            <div className="space-y-4 mt-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                  <span className="font-medium">Posts:</span>
+                  <span className="text-lg font-semibold">{selectedContributor.posts}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <span className="font-medium">Comments:</span>
+                  <span className="text-lg font-semibold">{selectedContributor.comments}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-pink-50 rounded-lg">
+                  <span className="font-medium">Threads:</span>
+                  <span className="text-lg font-semibold">{selectedContributor.threads}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
+                  <span className="font-medium">Replies:</span>
+                  <span className="text-lg font-semibold">{selectedContributor.replies}</span>
+                </div>
+              </div>
+              <div className="pt-4 border-t border-border">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+                  <span className="text-lg font-semibold">Total Score</span>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    {selectedContributor.totalScore}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1624,7 +1624,7 @@ const handleGetContributors = async (c: any) => {
     console.log(`Get contributors error: ${error}`)
     return c.json({ error: 'Failed to get contributors' }, 500)
   }
-})
+}
 
 // Get top contributors - support both route patterns
 app.get('/make-server-3134d39c/contributors', handleGetContributors)
