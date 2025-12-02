@@ -240,38 +240,71 @@ app.post('/make-server-3134d39c/posts', async (c) => {
     let photoUrl = null
     if (photoData) {
       try {
-        // Upload photo to Supabase Storage
-        const photoBuffer = Uint8Array.from(atob(photoData.split(',')[1]), c => c.charCodeAt(0))
-        const photoPath = `${postId}.jpg`
-        
-        const { error: uploadError } = await storageSupabase.storage
-          .from(bucketName)
-          .upload(photoPath, photoBuffer, {
-            contentType: 'image/jpeg',
-            upsert: true
-          })
-
-        if (uploadError) {
-          console.log(`Photo upload error: ${uploadError.message}`)
-          // Continue without photo if upload fails
+        // Validate photoData format
+        if (!photoData.includes(',')) {
+          console.log(`Invalid photoData format: missing comma separator`)
         } else {
-          // If bucket is public, use public URL (simpler and works with previews)
-          // Otherwise, use signed URL for private access
-          const { data: bucket } = await storageSupabase.storage.getBucket(bucketName)
-          if (bucket?.public) {
-            const { data: publicUrlData } = await storageSupabase.storage
-              .from(bucketName)
-              .getPublicUrl(photoPath)
-            photoUrl = publicUrlData?.publicUrl
+          const base64Data = photoData.split(',')[1]
+          if (!base64Data || base64Data.length === 0) {
+            console.log(`Invalid photoData: empty base64 data`)
           } else {
-            const { data: signedUrlData, error: signedUrlError } = await storageSupabase.storage
-              .from(bucketName)
-              .createSignedUrl(photoPath, 60 * 60 * 24 * 365) // 1 year
+            // Upload photo to Supabase Storage
+            const photoBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+            const photoPath = `${postId}.jpg`
             
-            if (signedUrlError) {
-              console.log(`Signed URL creation error: ${signedUrlError.message}`)
+            console.log(`Uploading photo: ${photoPath}, size: ${photoBuffer.length} bytes`)
+            
+            const { error: uploadError } = await storageSupabase.storage
+              .from(bucketName)
+              .upload(photoPath, photoBuffer, {
+                contentType: 'image/jpeg',
+                upsert: true
+              })
+
+            if (uploadError) {
+              console.log(`Photo upload error for ${photoPath}: ${uploadError.message}`, uploadError)
+              // Continue without photo if upload fails - photoUrl remains null
             } else {
-              photoUrl = signedUrlData?.signedUrl
+              console.log(`Photo uploaded successfully: ${photoPath}`)
+              // Verify the file exists by trying to get it
+              const { data: fileData, error: verifyError } = await storageSupabase.storage
+                .from(bucketName)
+                .list(photoPath.split('/')[0] || '', {
+                  limit: 100,
+                  search: photoPath.split('/').pop()
+                })
+              
+              if (verifyError) {
+                console.log(`File verification error for ${photoPath}: ${verifyError.message}`)
+              }
+              
+              // If bucket is public, use public URL (simpler and works with previews)
+              // Otherwise, use signed URL for private access
+              const { data: bucket } = await storageSupabase.storage.getBucket(bucketName)
+              if (bucket?.public) {
+                const { data: publicUrlData } = await storageSupabase.storage
+                  .from(bucketName)
+                  .getPublicUrl(photoPath)
+                if (publicUrlData?.publicUrl) {
+                  photoUrl = publicUrlData.publicUrl
+                  console.log(`Generated public URL for ${photoPath}: ${photoUrl}`)
+                } else {
+                  console.log(`Failed to generate public URL for ${photoPath}`)
+                }
+              } else {
+                const { data: signedUrlData, error: signedUrlError } = await storageSupabase.storage
+                  .from(bucketName)
+                  .createSignedUrl(photoPath, 60 * 60 * 24 * 365) // 1 year
+                
+                if (signedUrlError) {
+                  console.log(`Signed URL creation error: ${signedUrlError.message}`)
+                } else if (signedUrlData?.signedUrl) {
+                  photoUrl = signedUrlData.signedUrl
+                  console.log(`Generated signed URL for ${photoPath}`)
+                } else {
+                  console.log(`Failed to generate signed URL for ${photoPath}`)
+                }
+              }
             }
           }
         }
@@ -313,6 +346,82 @@ app.post('/make-server-3134d39c/posts', async (c) => {
   }
 })
 
+// Helper function to extract file path from URL
+const extractFilePathFromUrl = (photoUrl: string): string | null => {
+  try {
+    if (photoUrl.includes('/sign/')) {
+      // Signed URL format: .../sign/bucket-name/path?token=...
+      const signIndex = photoUrl.indexOf('/sign/')
+      const afterSign = photoUrl.substring(signIndex + 6) // Skip '/sign/'
+      const parts = afterSign.split('/')
+      if (parts.length > 1) {
+        // Skip bucket name, get the rest as file path
+        const filePath = parts.slice(1).join('/').split('?')[0]
+        return filePath
+      } else if (parts.length === 1) {
+        // If no bucket name in path, the whole thing after /sign/ is the path
+        return parts[0].split('?')[0]
+      }
+    } else if (photoUrl.includes('/object/public/')) {
+      // Public URL format: .../object/public/bucket-name/path
+      const publicIndex = photoUrl.indexOf('/object/public/')
+      const afterPublic = photoUrl.substring(publicIndex + 15)
+      const parts = afterPublic.split('/')
+      if (parts.length > 1) {
+        // Skip bucket name, get the rest as file path
+        return parts.slice(1).join('/').split('?')[0]
+      } else if (parts.length === 1) {
+        // If no bucket name in path, the whole thing after /object/public/ is the path
+        return parts[0].split('?')[0]
+      }
+    } else if (photoUrl.includes(bucketName)) {
+      // Try to extract from URL that contains bucket name
+      const bucketIndex = photoUrl.indexOf(bucketName)
+      if (bucketIndex >= 0) {
+        const afterBucket = photoUrl.substring(bucketIndex + bucketName.length)
+        const filePath = afterBucket.split('?')[0].replace(/^\//, '') // Remove leading slash
+        if (filePath) return filePath
+      }
+    }
+    return null
+  } catch (error) {
+    console.log(`Error extracting file path from URL: ${error}`)
+    return null
+  }
+}
+
+// Helper function to convert signed URLs to public URLs if bucket is public
+const convertPhotoUrlToPublic = (photoUrl: string | null | undefined, isBucketPublic: boolean): string | null => {
+  if (!photoUrl) return null
+  
+  // If already a public URL, return as is
+  if (photoUrl.includes('/object/public/')) {
+    return photoUrl
+  }
+  
+  // If bucket is not public, return signed URL as is
+  if (!isBucketPublic) {
+    return photoUrl
+  }
+  
+  // If it's a signed URL and bucket is public, convert to public
+  if (photoUrl.includes('?') || photoUrl.includes('/sign/')) {
+    const filePath = extractFilePathFromUrl(photoUrl)
+    if (filePath) {
+      // Generate public URL
+      // Format: https://[project].supabase.co/storage/v1/object/public/[bucket]/[path]
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`
+      console.log(`Converting URL: ${photoUrl.substring(0, 50)}... -> ${publicUrl.substring(0, 50)}...`)
+      return publicUrl
+    } else {
+      console.log(`Could not extract file path from URL: ${photoUrl.substring(0, 100)}`)
+    }
+  }
+  
+  return photoUrl
+}
+
 // Get all posts (with optional category filter)
 app.get('/make-server-3134d39c/posts', async (c) => {
   try {
@@ -325,6 +434,17 @@ app.get('/make-server-3134d39c/posts', async (c) => {
     
     if (category && category !== 'all') {
       posts = posts.filter(post => post.category === category)
+    }
+
+    // Convert photo URLs to public URLs if bucket is public
+    // Check bucket status once for efficiency
+    const { data: bucket } = await storageSupabase.storage.getBucket(bucketName)
+    const isBucketPublic = bucket?.public || false
+    
+    for (const post of posts) {
+      if (post.photoUrl) {
+        post.photoUrl = convertPhotoUrlToPublic(post.photoUrl, isBucketPublic)
+      }
     }
 
     // Sort by timestamp (newest first)

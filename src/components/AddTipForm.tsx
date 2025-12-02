@@ -98,10 +98,34 @@ const [tripDateInput, setTripDateInput] = useState('')
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Check file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024 // 5MB
+      if (file.size > maxSize) {
+        setError('Image size must be less than 5MB. Please compress or choose a smaller image.')
+        return
+      }
+      
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file.')
+        return
+      }
+      
       setPhotoFile(file)
+      setError('') // Clear any previous errors
       const reader = new FileReader()
+      reader.onerror = () => {
+        setError('Failed to read image file. Please try again.')
+        setPhotoFile(null)
+        setPhotoPreview(null)
+      }
       reader.onloadend = () => {
-        setPhotoPreview(reader.result as string)
+        if (reader.result) {
+          setPhotoPreview(reader.result as string)
+        } else {
+          setError('Failed to process image. Please try again.')
+          setPhotoFile(null)
+        }
       }
       reader.readAsDataURL(file)
     }
