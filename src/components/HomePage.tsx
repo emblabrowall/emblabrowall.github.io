@@ -303,7 +303,7 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
-              <Trophy className="h-5 w-5 text-white" />
+              <Trophy className="h-5 w-5 text-black" />
             </div>
             <h2>Highest Contributors</h2>
           </div>
@@ -350,13 +350,13 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
                               index === 0 
                                 ? 'bg-gradient-to-br from-yellow-500 via-yellow-600 to-orange-700 shadow-lg shadow-yellow-500/50 ring-2 ring-yellow-300' 
                                 : index === 1
-                                ? 'bg-gradient-to-br from-slate-600 to-slate-800 shadow-md border-2 border-slate-500'
+                                ? 'bg-gradient-to-br from-gray-200 to-gray-300 shadow-md border-2 border-gray-400'
                                 : index === 2
-                                ? 'bg-gradient-to-br from-orange-600 to-orange-800 shadow-md border-2 border-orange-500'
-                                : 'bg-gray-700 border-2 border-gray-800'
+                                ? 'bg-gradient-to-br from-orange-200 to-orange-300 shadow-md border-2 border-orange-400'
+                                : 'bg-gray-200 border-2 border-gray-300'
                             }`}
                           >
-                            <span className="text-white text-3xl font-black leading-none" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                            <span className="text-black text-3xl font-black leading-none">
                               {index + 1}
                             </span>
                           </div>
