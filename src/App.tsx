@@ -10,6 +10,7 @@ import { ForumPage } from './components/ForumPage'
 import { ThreadView } from './components/ThreadView'
 import { CreateThreadForm } from './components/CreateThreadForm'
 import { CalendarPage } from './components/CalendarPage'
+import { AddEventForm } from './components/AddEventForm'
 import { AdminPage } from './components/AdminPage'
 import { CursorTrail } from './components/CursorTrail'
 import { SoundEffects } from './components/SoundEffects'
@@ -198,9 +199,22 @@ export default function App() {
             user={user}
             onLoginRequired={handleLogin}
             onAddEvent={() => {
-              setCurrentPage('add-tip')
-              setInitialAddTipCategory('trips')
+              setCurrentPage('add-event')
             }}
+          />
+        )
+      
+      case 'add-event':
+        return (
+          <AddEventForm
+            user={user}
+            onSuccess={() => {
+              setCurrentPage('calendar')
+            }}
+            onCancel={() => {
+              setCurrentPage('calendar')
+            }}
+            onLoginRequired={handleLogin}
           />
         )
       

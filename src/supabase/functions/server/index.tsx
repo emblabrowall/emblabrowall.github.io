@@ -1340,6 +1340,13 @@ const handleDeleteUser = async (c: any) => {
       await kv.del(`replies:${reply.threadId}:${reply.id}`)
     }
 
+    // Delete user's events
+    const events = await kv.getByPrefix('events:') || []
+    const userEvents = events.filter((event) => event.authorId === userId)
+    for (const event of userEvents) {
+      await kv.del(`events:${event.id}`)
+    }
+
     // Delete user from Supabase Auth
     const { error: deleteError } = await supabase.auth.admin.deleteUser(userId)
     if (deleteError) {
@@ -1357,5 +1364,108 @@ const handleDeleteUser = async (c: any) => {
 // Delete a user (admin only) - support both route patterns
 app.delete('/make-server-3134d39c/admin/users/:userId', handleDeleteUser)
 app.delete('/admin/users/:userId', handleDeleteUser)
+
+// ============== CALENDAR EVENTS ROUTES ==============
+
+// Create a new calendar event
+app.post('/make-server-3134d39c/events', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1]
+    if (!accessToken) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken)
+    if (error || !user) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const userInfo = await kv.get(`users:${user.id}`)
+    const { title, date, info } = await c.req.json()
+
+    if (!title || !date) {
+      return c.json({ error: 'Title and date are required' }, 400)
+    }
+
+    const eventId = `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+    const event = {
+      id: eventId,
+      title,
+      date,
+      info: info || '',
+      authorId: user.id,
+      authorName: userInfo?.name || 'Anonymous',
+      verified: userInfo?.verified || false,
+      timestamp: new Date().toISOString(),
+    }
+
+    await kv.set(`events:${eventId}`, event)
+
+    return c.json({ success: true, event })
+  } catch (error) {
+    console.log(`Create event error: ${error}`)
+    return c.json({ error: 'Failed to create event' }, 500)
+  }
+})
+
+// Get all calendar events
+app.get('/make-server-3134d39c/events', async (c) => {
+  try {
+    // getByPrefix already returns an array of values directly
+    let events = await kv.getByPrefix('events:') || []
+    
+    // Filter out null/undefined events and ensure they're valid objects
+    events = events.filter(event => event && typeof event === 'object')
+
+    // Sort by date (earliest first)
+    events.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0
+      const dateB = b.date ? new Date(b.date).getTime() : 0
+      return dateA - dateB
+    })
+
+    return c.json({ events })
+  } catch (error) {
+    console.log(`Get events error: ${error}`)
+    return c.json({ error: 'Failed to get events' }, 500)
+  }
+})
+
+// Delete a calendar event
+app.delete('/make-server-3134d39c/events/:eventId', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1]
+    if (!accessToken) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken)
+    if (error || !user) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const eventId = c.req.param('eventId')
+    const event = await kv.get(`events:${eventId}`)
+    
+    if (!event) {
+      return c.json({ error: 'Event not found' }, 404)
+    }
+
+    const userIsAdmin = await isAdmin(user.id)
+    const isOwner = event.authorId === user.id
+
+    if (!userIsAdmin && !isOwner) {
+      return c.json({ error: 'Forbidden: You can only delete your own events' }, 403)
+    }
+
+    await kv.del(`events:${eventId}`)
+
+    return c.json({ success: true })
+  } catch (error) {
+    console.log(`Delete event error: ${error}`)
+    return c.json({ error: 'Failed to delete event' }, 500)
+  }
+})
 
 Deno.serve(app.fetch)

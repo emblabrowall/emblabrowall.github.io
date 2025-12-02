@@ -410,4 +410,46 @@ export const api = {
     }
     return data
   },
+
+  // Calendar Events
+  async createEvent(title: string, date: string, info: string) {
+    const session = await this.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    const response = await fetch(`${API_URL}/events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ title, date, info }),
+    })
+    return response.json()
+  },
+
+  async getEvents() {
+    const response = await fetch(`${API_URL}/events`, {
+      headers: {
+        'Authorization': `Bearer ${publicAnonKey}`,
+      },
+    })
+    return response.json()
+  },
+
+  async deleteEvent(eventId: string) {
+    const session = await this.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    const response = await fetch(`${API_URL}/events/${eventId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    })
+    const data = await response.json()
+    if (!response.ok) {
+      return { error: data.error || 'Failed to delete event' }
+    }
+    return data
+  },
 }

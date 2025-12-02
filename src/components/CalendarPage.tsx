@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Button } from './ui/button'
-import { Plus, MapPin, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { api } from '../utils/api'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 // Helper function to format dates
 const formatDate = (date: Date): string => {
   return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
@@ -47,24 +47,26 @@ interface CalendarEvent {
   id: string
   title: string
   date: string
-  time?: string
-  place?: string
-  activityType?: string
-  content?: string
+  info?: string
   authorName: string
+  authorId: string
+  verified: boolean
+  timestamp: string
 }
 
 interface CalendarPageProps {
   user: any
   onLoginRequired: () => void
   onAddEvent: () => void
+  onDeleteEvent?: (eventId: string) => void
 }
 
-export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPageProps) {
+export function CalendarPage({ user, onLoginRequired, onAddEvent, onDeleteEvent }: CalendarPageProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const [expandedEvent, setExpandedEvent] = useState<string | null>(null)
 
   useEffect(() => {
     loadEvents()
@@ -73,29 +75,35 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
   const loadEvents = async () => {
     setLoading(true)
     try {
-      const { posts } = await api.getPosts('trips')
-      // Transform trips to calendar events (one event per selected trip date)
-      const calendarEvents: CalendarEvent[] = (posts || []).flatMap((post: any) => {
-        const dates: string[] = Array.isArray(post.tripDates) && post.tripDates.length > 0
-          ? post.tripDates
-          : [post.timestamp]
-
-        return dates.map((d, index) => ({
-          id: `${post.id}-${index}`,
-          title: post.title,
-          date: d,
-          time: post.travelTime,
-          place: post.cityName,
-          activityType: 'trip',
-          content: post.content,
-          authorName: post.authorName,
-        }))
-      })
-      setEvents(calendarEvents)
+      const { events: fetchedEvents } = await api.getEvents()
+      setEvents(fetchedEvents || [])
     } catch (error) {
       console.error('Error loading events:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!user) {
+      onLoginRequired()
+      return
+    }
+
+    try {
+      const result = await api.deleteEvent(eventId)
+      if (result.error) {
+        console.error('Error deleting event:', result.error)
+        return
+      }
+      // Reload events after deletion
+      await loadEvents()
+      setExpandedEvent(null)
+      if (onDeleteEvent) {
+        onDeleteEvent(eventId)
+      }
+    } catch (error) {
+      console.error('Error deleting event:', error)
     }
   }
 
@@ -148,7 +156,7 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
           <div>
             <h1 className="mb-3">📅 Calendar</h1>
               <p className="text-muted-foreground">
-                View upcoming trips and important dates
+                View upcoming events and important dates
               </p>
           </div>
           {user && (
@@ -157,7 +165,7 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Trip
+              Add Event
             </Button>
           )}
         </div>
@@ -246,11 +254,25 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
                         <span className="text-xs font-medium">
                           {date.getDate()}
                         </span>
-                        <span className="mt-auto mb-1 h-1.5 w-1.5 rounded-full">
-                          {hasEvents && !isSelected && (
-                            <span className="block h-1.5 w-1.5 rounded-full bg-blue-500" />
-                          )}
-                        </span>
+                        {hasEvents && (
+                          <div className="mt-auto mb-1 flex items-center justify-center gap-0.5">
+                            {getEventsForDate(date).slice(0, 3).map((_, idx) => (
+                              <span
+                                key={idx}
+                                className={`block h-1.5 w-1.5 rounded-full ${
+                                  isSelected ? 'bg-primary-foreground' : 'bg-blue-500'
+                                }`}
+                              />
+                            ))}
+                            {getEventsForDate(date).length > 3 && (
+                              <span className={`text-[8px] font-medium ${
+                                isSelected ? 'text-primary-foreground' : 'text-blue-500'
+                              }`}>
+                                +{getEventsForDate(date).length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </button>
                     )
                   })}
@@ -294,44 +316,71 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
               )}
             </div>
           ) : (
-            <div className="space-y-4 overflow-y-auto">
-              {selectedDateEvents.map((event) => (
-                <motion.div
-                  key={event.id}
-                  className="p-4 rounded-xl border border-border bg-white shadow-sm"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <h4 className="font-semibold mb-1 text-sm">{event.title}</h4>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-1">
-                    {event.time && (
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {event.time}
-                      </span>
+            <div className="space-y-3 overflow-y-auto">
+              <AnimatePresence>
+                {selectedDateEvents.map((event) => (
+                  <motion.div
+                    key={event.id}
+                    className="rounded-xl border border-border bg-white shadow-sm overflow-hidden"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <button
+                      onClick={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
+                      className="w-full text-left p-4 hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold mb-1 text-sm truncate">{event.title}</h4>
+                          {event.info && (
+                            <p className={`text-xs text-muted-foreground ${expandedEvent === event.id ? '' : 'line-clamp-2'}`}>
+                              {event.info}
+                            </p>
+                          )}
+                          <p className="text-[11px] text-muted-foreground mt-2">
+                            By {event.authorName}
+                            {event.verified && (
+                              <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-blue-50 text-blue-700">
+                                ✓ Verified
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        {(user?.id === event.authorId || user?.admin) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive flex-shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (confirm('Are you sure you want to delete this event?')) {
+                                handleDeleteEvent(event.id)
+                              }
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </button>
+                    {expandedEvent === event.id && event.info && (
+                      <motion.div
+                        className="px-4 pb-4 border-t border-border bg-accent/30"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                      >
+                        <div className="pt-3">
+                          <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                            {event.info}
+                          </p>
+                        </div>
+                      </motion.div>
                     )}
-                    {event.place && (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {event.place}
-                      </span>
-                    )}
-                    {event.activityType && (
-                      <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] uppercase tracking-wide">
-                        {event.activityType}
-                      </span>
-                    )}
-                  </div>
-                  {event.content && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-3">
-                      {event.content}
-                    </p>
-                  )}
-                  <p className="text-[11px] text-muted-foreground mt-2">
-                    By {event.authorName}
-                  </p>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
         </motion.div>
@@ -367,10 +416,9 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
                       {formatDateShort(new Date(event.date))}
                     </span>
                   </div>
-                  {event.place && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {event.place}
+                  {event.info && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {event.info}
                     </p>
                   )}
                 </motion.div>
