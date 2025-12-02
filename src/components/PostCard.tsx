@@ -171,6 +171,10 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
 
   const getPriceSymbol = (price: string) => {
     if (!price || price === 'free') return 'Free'
+    if (price === 'cheap') return '€'
+    if (price === 'moderate') return '€€'
+    if (price === 'expensive') return '€€€'
+    // Fallback for old numeric values
     return '€'.repeat(parseInt(price) || 1)
   }
 
@@ -201,7 +205,7 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
               className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50"
               whileHover={{ scale: 1.05 }}
             >
-              {post.category}
+              {post.category === 'food' && post.foodCategory ? post.foodCategory : post.category}
             </motion.span>
             {post.area && (
               <span className="flex items-center gap-1">
@@ -215,8 +219,17 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
                 {getPriceSymbol(post.price)}
               </span>
             )}
-            {post.rating && (
-              <span>{getRatingStars(post.rating)}</span>
+            {(post.rating || post.foodRating || post.atmosphereRating || post.overallRating || post.overallScore) && (
+              <span>
+                {getRatingStars(
+                  post.rating || 
+                  post.foodRating || 
+                  post.atmosphereRating || 
+                  post.overallRating || 
+                  post.overallScore || 
+                  0
+                )}
+              </span>
             )}
           </div>
         </div>

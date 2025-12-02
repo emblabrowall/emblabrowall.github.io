@@ -146,7 +146,7 @@ export function CalendarPage({ user, onLoginRequired, onAddEvent }: CalendarPage
         
         <div className="relative z-10 flex items-center justify-between">
           <div>
-            <h1 className="mb-3">📅 Trips Calendar</h1>
+            <h1 className="mb-3">📅 Calendar</h1>
               <p className="text-muted-foreground">
                 View upcoming trips and important dates
               </p>

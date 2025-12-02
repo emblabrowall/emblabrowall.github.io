@@ -73,7 +73,8 @@ export function PostListPage({
       const matchesSearch = 
         post.title.toLowerCase().includes(query) ||
         post.content.toLowerCase().includes(query) ||
-        (post.area && post.area.toLowerCase().includes(query))
+        (post.area && post.area.toLowerCase().includes(query)) ||
+        (post.foodCategory && post.foodCategory.toLowerCase().includes(query))
       
       if (!matchesSearch) return false
     }

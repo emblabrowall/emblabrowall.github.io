@@ -27,6 +27,7 @@ export function AddTipForm({ user, onSuccess, onLoginRequired, initialCategory }
   const [area, setArea] = useState('')
 
   // Courses fields
+  const [courseName, setCourseName] = useState('')
   const [year, setYear] = useState('')
   const [semester, setSemester] = useState('')
   const [ects, setEcts] = useState('')
@@ -115,6 +116,7 @@ const [tripDateInput, setTripDateInput] = useState('')
     setTitle('')
     setContent('')
     setArea('')
+    setCourseName('')
     setYear('')
     setSemester('')
     setEcts('')
@@ -173,7 +175,7 @@ const [tripDateInput, setTripDateInput] = useState('')
 
     try {
       const postData: any = {
-        title: category === 'courses' ? title : 
+        title: category === 'courses' ? courseName : 
               category === 'food' ? restaurantName :
               category === 'clubs' ? name :
               category === 'activities' ? activityName :
@@ -187,6 +189,7 @@ const [tripDateInput, setTripDateInput] = useState('')
 
       // Add category-specific fields
       if (category === 'courses') {
+        postData.courseName = courseName || null
         postData.year = year || null
         postData.semester = semester || null
         postData.ects = ects || null
@@ -202,7 +205,7 @@ const [tripDateInput, setTripDateInput] = useState('')
       } else if (category === 'clubs') {
         postData.musicStyle = musicStyle || null
         postData.type = type || null
-        postData.entrancePrice = entrancePrice || null
+        postData.price = entrancePrice || null
         postData.overallRating = overallRating || null
       } else if (category === 'activities') {
         postData.price = activityPrice || null
@@ -240,6 +243,16 @@ const [tripDateInput, setTripDateInput] = useState('')
       case 'courses':
         return (
           <>
+            <div className="space-y-2">
+              <Label htmlFor="courseName">Course Name *</Label>
+              <Input
+                id="courseName"
+                placeholder="e.g., Introduction to Computer Science"
+                value={courseName}
+                onChange={(e) => setCourseName(e.target.value)}
+                required
+              />
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="year">Year *</Label>
@@ -519,13 +532,17 @@ const [tripDateInput, setTripDateInput] = useState('')
               </div>
               <div className="space-y-2">
                 <Label htmlFor="entrancePrice">Entrance Price</Label>
-                <Input
-                  id="entrancePrice"
-                  type="number"
-                  placeholder="e.g., 10"
-                  value={entrancePrice}
-                  onChange={(e) => setEntrancePrice(e.target.value)}
-                />
+                <Select value={entrancePrice} onValueChange={setEntrancePrice}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select price" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="cheap">€ (Cheap)</SelectItem>
+                    <SelectItem value="moderate">€€ (Moderate)</SelectItem>
+                    <SelectItem value="expensive">€€€ (Expensive)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="space-y-2">
@@ -562,13 +579,17 @@ const [tripDateInput, setTripDateInput] = useState('')
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="activityPrice">Price</Label>
-                <Input
-                  id="activityPrice"
-                  type="number"
-                  placeholder="e.g., 15"
-                  value={activityPrice}
-                  onChange={(e) => setActivityPrice(e.target.value)}
-                />
+                <Select value={activityPrice} onValueChange={setActivityPrice}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select price" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="cheap">€ (Cheap)</SelectItem>
+                    <SelectItem value="moderate">€€ (Moderate)</SelectItem>
+                    <SelectItem value="expensive">€€€ (Expensive)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="location">Location/Area</Label>
@@ -646,13 +667,17 @@ const [tripDateInput, setTripDateInput] = useState('')
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="tripPrice">Price</Label>
-                <Input
-                  id="tripPrice"
-                  type="number"
-                  placeholder="e.g., 25"
-                  value={tripPrice}
-                  onChange={(e) => setTripPrice(e.target.value)}
-                />
+                <Select value={tripPrice} onValueChange={setTripPrice}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select price" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="cheap">€ (Cheap)</SelectItem>
+                    <SelectItem value="moderate">€€ (Moderate)</SelectItem>
+                    <SelectItem value="expensive">€€€ (Expensive)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tripRating">Overall Rating (1-5) *</Label>
@@ -822,6 +847,9 @@ const [tripDateInput, setTripDateInput] = useState('')
                     onChange={(e) => setTitle(e.target.value)}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {title.length > 0 ? `${title.length} characters` : 'Enter a descriptive title'}
+                  </p>
                 </div>
               )}
 
