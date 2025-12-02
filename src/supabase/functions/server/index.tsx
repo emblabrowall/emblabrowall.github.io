@@ -1367,8 +1367,8 @@ app.delete('/admin/users/:userId', handleDeleteUser)
 
 // ============== CALENDAR EVENTS ROUTES ==============
 
-// Create a new calendar event
-app.post('/make-server-3134d39c/events', async (c) => {
+// Handler for creating a new calendar event
+const handleCreateEvent = async (c: any) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1]
     if (!accessToken) {
@@ -1407,10 +1407,10 @@ app.post('/make-server-3134d39c/events', async (c) => {
     console.log(`Create event error: ${error}`)
     return c.json({ error: 'Failed to create event' }, 500)
   }
-})
+}
 
-// Get all calendar events
-app.get('/make-server-3134d39c/events', async (c) => {
+// Handler for getting all calendar events
+const handleGetEvents = async (c: any) => {
   try {
     // getByPrefix already returns an array of values directly
     let events = await kv.getByPrefix('events:') || []
@@ -1430,10 +1430,10 @@ app.get('/make-server-3134d39c/events', async (c) => {
     console.log(`Get events error: ${error}`)
     return c.json({ error: 'Failed to get events' }, 500)
   }
-})
+}
 
-// Delete a calendar event
-app.delete('/make-server-3134d39c/events/:eventId', async (c) => {
+// Handler for deleting a calendar event
+const handleDeleteEvent = async (c: any) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1]
     if (!accessToken) {
@@ -1466,6 +1466,18 @@ app.delete('/make-server-3134d39c/events/:eventId', async (c) => {
     console.log(`Delete event error: ${error}`)
     return c.json({ error: 'Failed to delete event' }, 500)
   }
-})
+}
+
+// Create a new calendar event - support both route patterns
+app.post('/make-server-3134d39c/events', handleCreateEvent)
+app.post('/events', handleCreateEvent)
+
+// Get all calendar events - support both route patterns
+app.get('/make-server-3134d39c/events', handleGetEvents)
+app.get('/events', handleGetEvents)
+
+// Delete a calendar event - support both route patterns
+app.delete('/make-server-3134d39c/events/:eventId', handleDeleteEvent)
+app.delete('/events/:eventId', handleDeleteEvent)
 
 Deno.serve(app.fetch)

@@ -199,13 +199,14 @@ const [tripDateInput, setTripDateInput] = useState('')
 
     try {
       const postData: any = {
-        // For courses, use courseName as title. For others, use the title field if provided, otherwise fall back to name
+        // For courses, use courseName as title. For others, use the title field (required), fall back to name if empty
         title: category === 'courses' ? courseName : 
-              (title && title.trim()) ? title :
-              category === 'food' ? restaurantName :
-              category === 'clubs' ? name :
-              category === 'activities' ? activityName :
-              category === 'trips' ? cityName : title,
+              (title && title.trim()) ? title.trim() :
+              category === 'food' ? (restaurantName || 'Untitled') :
+              category === 'clubs' ? (name || 'Untitled') :
+              category === 'activities' ? (activityName || 'Untitled') :
+              category === 'trips' ? (cityName || 'Untitled') : 
+              (title && title.trim()) ? title.trim() : 'Untitled',
         category,
         content,
         photoData: photoPreview,

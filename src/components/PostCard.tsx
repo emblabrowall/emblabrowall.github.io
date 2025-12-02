@@ -204,26 +204,40 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
       {/* Header */}
       <div className="flex items-start justify-between mb-4 relative z-10">
         <div className="flex-1">
-          <h3 className="mb-2">{post.title}</h3>
+          {/* Show title as main heading - this is what the user entered in the title field */}
+          <h3 className="mb-2 text-lg font-semibold">{post.title || 'Untitled'}</h3>
           {/* Show name separately if it exists (for food, activities, trips, clubs) */}
+          {/* This helps users see both the descriptive title and the actual name/place */}
           {post.restaurantName && (
             <p className="text-sm font-medium text-muted-foreground mb-2">
-              {post.restaurantName}
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {post.restaurantName}
+              </span>
             </p>
           )}
           {post.activityName && (
             <p className="text-sm font-medium text-muted-foreground mb-2">
-              {post.activityName}
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {post.activityName}
+              </span>
             </p>
           )}
           {post.cityName && (
             <p className="text-sm font-medium text-muted-foreground mb-2">
-              {post.cityName}
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {post.cityName}
+              </span>
             </p>
           )}
           {post.name && post.category === 'clubs' && (
             <p className="text-sm font-medium text-muted-foreground mb-2">
-              {post.name}
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {post.name}
+              </span>
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
