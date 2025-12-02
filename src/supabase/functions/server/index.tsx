@@ -1482,8 +1482,8 @@ app.delete('/events/:eventId', handleDeleteEvent)
 
 // ============== CONTRIBUTORS ROUTES ==============
 
-// Get top contributors
-app.get('/make-server-3134d39c/contributors', async (c) => {
+// Handler for getting top contributors
+const handleGetContributors = async (c: any) => {
   try {
     const limit = parseInt(c.req.query('limit') || '5')
     
@@ -1499,15 +1499,6 @@ app.get('/make-server-3134d39c/contributors', async (c) => {
     // Get all replies
     const allReplies = await kv.getByPrefix('replies:') || []
     
-    // Get all upvotes (for posts)
-    const allPostUpvotes = await kv.getByPrefix('upvotes:') || []
-    
-    // Get all thread upvotes
-    const allThreadUpvotes = await kv.getByPrefix('thread-upvotes:') || []
-    
-    // Get all reply upvotes
-    const allReplyUpvotes = await kv.getByPrefix('reply-upvotes:') || []
-    
     // Calculate scores for each user
     const userScores: Record<string, {
       userId: string
@@ -1521,7 +1512,7 @@ app.get('/make-server-3134d39c/contributors', async (c) => {
       totalScore: number
     }> = {}
     
-    // Count posts
+    // Count posts and upvotes received
     for (const post of posts) {
       if (post && post.authorId) {
         if (!userScores[post.authorId]) {
@@ -1538,13 +1529,8 @@ app.get('/make-server-3134d39c/contributors', async (c) => {
           }
         }
         userScores[post.authorId].posts++
-        // Count upvotes received on posts
-        const postUpvotes = allPostUpvotes.filter((upvote: any) => {
-          // Extract postId from upvote key format: upvotes:postId:userId
-          const key = typeof upvote === 'string' ? upvote : upvote.key || ''
-          return key.startsWith(`upvotes:${post.id}:`)
-        })
-        userScores[post.authorId].upvotesReceived += postUpvotes.length
+        // Count upvotes received on posts (from post.upvotes property)
+        userScores[post.authorId].upvotesReceived += post.upvotes || 0
       }
     }
     
@@ -1568,7 +1554,7 @@ app.get('/make-server-3134d39c/contributors', async (c) => {
       }
     }
     
-    // Count threads
+    // Count threads and upvotes received
     for (const thread of threads) {
       if (thread && thread.authorId) {
         if (!userScores[thread.authorId]) {
@@ -1585,16 +1571,12 @@ app.get('/make-server-3134d39c/contributors', async (c) => {
           }
         }
         userScores[thread.authorId].threads++
-        // Count upvotes received on threads
-        const threadUpvotes = allThreadUpvotes.filter((upvote: any) => {
-          const key = typeof upvote === 'string' ? upvote : upvote.key || ''
-          return key.startsWith(`thread-upvotes:${thread.id}:`)
-        })
-        userScores[thread.authorId].upvotesReceived += threadUpvotes.length
+        // Count upvotes received on threads (from thread.upvotes property)
+        userScores[thread.authorId].upvotesReceived += thread.upvotes || 0
       }
     }
     
-    // Count replies
+    // Count replies and upvotes received
     for (const reply of allReplies) {
       if (reply && reply.authorId) {
         if (!userScores[reply.authorId]) {
@@ -1611,12 +1593,8 @@ app.get('/make-server-3134d39c/contributors', async (c) => {
           }
         }
         userScores[reply.authorId].replies++
-        // Count upvotes received on replies
-        const replyUpvotes = allReplyUpvotes.filter((upvote: any) => {
-          const key = typeof upvote === 'string' ? upvote : upvote.key || ''
-          return key.startsWith(`reply-upvotes:${reply.id}:`)
-        })
-        userScores[reply.authorId].upvotesReceived += replyUpvotes.length
+        // Count upvotes received on replies (from reply.upvotes property)
+        userScores[reply.authorId].upvotesReceived += reply.upvotes || 0
         // Count helpful marks as bonus points
         if (reply.helpful) {
           userScores[reply.authorId].upvotesReceived += 2 // Bonus for helpful replies
@@ -1648,9 +1626,8 @@ app.get('/make-server-3134d39c/contributors', async (c) => {
   }
 })
 
-// Also support non-prefixed route
-app.get('/contributors', async (c) => {
-  return app.fetch(c.req.raw)
-})
+// Get top contributors - support both route patterns
+app.get('/make-server-3134d39c/contributors', handleGetContributors)
+app.get('/contributors', handleGetContributors)
 
 Deno.serve(app.fetch)
