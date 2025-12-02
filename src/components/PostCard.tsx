@@ -258,6 +258,73 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
       {/* Content */}
       <p className="text-foreground mb-4 whitespace-pre-wrap relative z-10">{post.content}</p>
 
+      {/* Category-specific Details */}
+      {post.category === 'courses' && (
+        <div className="mb-4 p-4 bg-blue-50/50 rounded-lg border border-blue-100 relative z-10">
+          <h4 className="font-semibold text-sm mb-2 text-blue-900">Course Details</h4>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {post.year && <div><span className="font-medium">Year:</span> {post.year}</div>}
+            {post.semester && <div><span className="font-medium">Semester:</span> {post.semester}</div>}
+            {post.ects && <div><span className="font-medium">ECTS:</span> {post.ects}</div>}
+            {post.onlineOrCampus && <div><span className="font-medium">Format:</span> {post.onlineOrCampus === 'online' ? 'Online' : 'On Campus'}</div>}
+            {post.examinationType && Array.isArray(post.examinationType) && post.examinationType.length > 0 && (
+              <div className="col-span-2"><span className="font-medium">Examination:</span> {post.examinationType.map((t: string) => t === 'written-assignments' ? 'Written Assignments' : t === 'seminars' ? 'Seminars' : 'Exams').join(', ')}</div>
+            )}
+            {post.workload && <div><span className="font-medium">Workload:</span> {post.workload}/5</div>}
+            {post.overallScore && <div><span className="font-medium">Overall Score:</span> {getRatingStars(parseFloat(post.overallScore))}</div>}
+          </div>
+        </div>
+      )}
+
+      {post.category === 'food' && (
+        <div className="mb-4 p-4 bg-orange-50/50 rounded-lg border border-orange-100 relative z-10">
+          <h4 className="font-semibold text-sm mb-2 text-orange-900">Restaurant Details</h4>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {post.foodCategory && <div><span className="font-medium">Type:</span> {post.foodCategory.charAt(0).toUpperCase() + post.foodCategory.slice(1)}</div>}
+            {post.atmosphereRating && <div><span className="font-medium">Atmosphere:</span> {getRatingStars(parseFloat(post.atmosphereRating))}</div>}
+            {post.foodRating && <div><span className="font-medium">Food Rating:</span> {getRatingStars(parseFloat(post.foodRating))}</div>}
+          </div>
+        </div>
+      )}
+
+      {post.category === 'clubs' && (
+        <div className="mb-4 p-4 bg-purple-50/50 rounded-lg border border-purple-100 relative z-10">
+          <h4 className="font-semibold text-sm mb-2 text-purple-900">Venue Details</h4>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {post.type && <div><span className="font-medium">Type:</span> {post.type.charAt(0).toUpperCase() + post.type.slice(1)}</div>}
+            {post.musicStyle && <div><span className="font-medium">Music:</span> {post.musicStyle}</div>}
+            {post.price && <div><span className="font-medium">Entrance:</span> {getPriceSymbol(post.price)}</div>}
+            {post.overallRating && <div><span className="font-medium">Rating:</span> {getRatingStars(parseFloat(post.overallRating))}</div>}
+          </div>
+        </div>
+      )}
+
+      {post.category === 'activities' && (
+        <div className="mb-4 p-4 bg-green-50/50 rounded-lg border border-green-100 relative z-10">
+          <h4 className="font-semibold text-sm mb-2 text-green-900">Activity Details</h4>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {post.location && <div><span className="font-medium">Location:</span> {post.location}</div>}
+            {post.price && <div><span className="font-medium">Price:</span> {getPriceSymbol(post.price)}</div>}
+            {post.overallRating && <div><span className="font-medium">Rating:</span> {getRatingStars(parseFloat(post.overallRating))}</div>}
+          </div>
+        </div>
+      )}
+
+      {post.category === 'trips' && (
+        <div className="mb-4 p-4 bg-emerald-50/50 rounded-lg border border-emerald-100 relative z-10">
+          <h4 className="font-semibold text-sm mb-2 text-emerald-900">Trip Details</h4>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {post.travelType && <div><span className="font-medium">Transport:</span> {post.travelType.charAt(0).toUpperCase() + post.travelType.slice(1)}</div>}
+            {post.travelTime && <div><span className="font-medium">Travel Time:</span> {post.travelTime}</div>}
+            {post.price && <div><span className="font-medium">Price:</span> {getPriceSymbol(post.price)}</div>}
+            {post.overallRating && <div><span className="font-medium">Rating:</span> {getRatingStars(parseFloat(post.overallRating))}</div>}
+            {post.tripDates && Array.isArray(post.tripDates) && post.tripDates.length > 0 && (
+              <div className="col-span-2"><span className="font-medium">Dates:</span> {post.tripDates.join(', ')}</div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Author & Date */}
       <div className="flex items-center justify-between text-sm text-muted-foreground mb-4 pb-4 border-b border-border relative z-10">
         <div className="flex items-center gap-2">
