@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ThumbsUp, Flag, MessageCircle, MapPin, Euro, Sparkle, Trash2 } from 'lucide-react'
+import { ThumbsUp, Flag, MessageCircle, MapPin, Sparkle, Trash2 } from 'lucide-react'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
 import { api } from '../utils/api'
@@ -171,11 +171,16 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
 
   const getPriceSymbol = (price: string) => {
     if (!price || price === 'free') return 'Free'
-    if (price === 'cheap') return '€'
-    if (price === 'moderate') return '€€'
-    if (price === 'expensive') return '€€€'
-    // Fallback for old numeric values
-    return '€'.repeat(parseInt(price) || 1)
+    if (price === 'cheap') return 'Cheap'
+    if (price === 'moderate') return 'Moderate'
+    if (price === 'expensive') return 'Expensive'
+    // Fallback for old numeric values - convert to text
+    const numPrice = parseInt(price)
+    if (numPrice === 0 || isNaN(numPrice)) return 'Free'
+    if (numPrice === 1) return 'Cheap'
+    if (numPrice === 2) return 'Moderate'
+    if (numPrice >= 3) return 'Expensive'
+    return 'Moderate'
   }
 
   const getRatingStars = (rating: number) => {
@@ -215,7 +220,6 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
             )}
             {post.price && (
               <span className="flex items-center gap-1">
-                <Euro className="h-3 w-3" />
                 {getPriceSymbol(post.price)}
               </span>
             )}

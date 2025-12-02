@@ -1113,8 +1113,8 @@ const handleGetAllUsers = async (c: any) => {
 }
 
 // Get all users (admin only) - support both route patterns
-app.get('/admin/users', handleGetAllUsers)
 app.get('/make-server-3134d39c/admin/users', handleGetAllUsers)
+app.get('/admin/users', handleGetAllUsers)
 
 // Handler for deleting a user (admin only)
 const handleDeleteUser = async (c: any) => {
@@ -1203,7 +1203,7 @@ const handleDeleteUser = async (c: any) => {
 }
 
 // Delete a user (admin only) - support both route patterns
-app.delete('/admin/users/:userId', handleDeleteUser)
 app.delete('/make-server-3134d39c/admin/users/:userId', handleDeleteUser)
+app.delete('/admin/users/:userId', handleDeleteUser)
 
 Deno.serve(app.fetch)
