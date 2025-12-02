@@ -65,18 +65,12 @@ export function AddTipForm({ user, onSuccess, onLoginRequired, initialCategory }
 const [tripDates, setTripDates] = useState<string[]>([])
 const [tripDateInput, setTripDateInput] = useState('')
 
-  // Calendar fields
-  const [calendarTime, setCalendarTime] = useState('')
-  const [calendarPlace, setCalendarPlace] = useState('')
-  const [calendarActivityType, setCalendarActivityType] = useState('')
-
   const categories = [
     { value: 'courses', label: 'Courses' },
     { value: 'food', label: 'Food & Cafés' },
     { value: 'clubs', label: 'Nightlife' },
     { value: 'activities', label: 'Activities' },
     { value: 'trips', label: 'Trips' },
-    { value: 'calendar', label: 'Calendar' },
   ]
 
   // Update category when initialCategory changes
@@ -167,11 +161,8 @@ const [tripDateInput, setTripDateInput] = useState('')
     setTravelTime('')
     setTripPrice('')
     setTripRating('')
-  setTripDates([])
-  setTripDateInput('')
-    setCalendarTime('')
-    setCalendarPlace('')
-    setCalendarActivityType('')
+    setTripDates([])
+    setTripDateInput('')
     setPhotoFile(null)
     setPhotoPreview(null)
   }
@@ -247,10 +238,6 @@ const [tripDateInput, setTripDateInput] = useState('')
         postData.price = tripPrice || null
         postData.overallRating = tripRating || null
         postData.tripDates = tripDates
-      } else if (category === 'calendar') {
-        postData.time = calendarTime || null
-        postData.place = calendarPlace || null
-        postData.activityType = calendarActivityType || null
       }
 
       await api.createPost(postData)
@@ -771,52 +758,6 @@ const [tripDateInput, setTripDateInput] = useState('')
           </>
         )
 
-      case 'calendar':
-        return (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="calendarActivityType">Type of Calendar Activity *</Label>
-              <Select value={calendarActivityType} onValueChange={setCalendarActivityType} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select activity type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="deadline">Deadline</SelectItem>
-                  <SelectItem value="event">Event</SelectItem>
-                  <SelectItem value="exam">Exam</SelectItem>
-                  <SelectItem value="holiday">Holiday</SelectItem>
-                  <SelectItem value="meeting">Meeting</SelectItem>
-                  <SelectItem value="workshop">Workshop</SelectItem>
-                  <SelectItem value="trip">Trip</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="calendarTime">Time *</Label>
-                <Input
-                  id="calendarTime"
-                  type="datetime-local"
-                  value={calendarTime}
-                  onChange={(e) => setCalendarTime(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="calendarPlace">Place *</Label>
-                <Input
-                  id="calendarPlace"
-                  placeholder="e.g., Room 101, Online, Main Campus"
-                  value={calendarPlace}
-                  onChange={(e) => setCalendarPlace(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-          </>
-        )
-
       default:
         return null
     }
@@ -870,7 +811,6 @@ const [tripDateInput, setTripDateInput] = useState('')
                       category === 'clubs' ? 'e.g., Bataplan Nightclub' :
                       category === 'activities' ? 'e.g., Hiking in Monte Igueldo' :
                       category === 'trips' ? 'e.g., Day trip to Bilbao' :
-                      category === 'calendar' ? 'e.g., Final Exam, Orientation Day' :
                       'Enter a title'
                     }
                     value={title}

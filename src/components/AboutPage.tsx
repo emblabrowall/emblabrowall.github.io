@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Mail, Users, FileText, TrendingUp, MessageCircle, Facebook } from 'lucide-react'
+import { Mail, Users, FileText, TrendingUp, MessageCircle, Facebook, Map } from 'lucide-react'
 import { Button, buttonVariants } from './ui/button'
 import { api } from '../utils/api'
 import { cn } from './ui/utils'
@@ -56,6 +56,28 @@ export function AboutPage() {
         <p className="text-muted-foreground">
           Our new <strong>forum section</strong> makes it even easier to connect with other students in real-time, ask questions, find roommates, organize events, and build lasting friendships during your exchange!
         </p>
+      </div>
+
+      {/* Find Your Classroom */}
+      <div className="bg-white rounded-2xl shadow-sm border border-border p-8">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+            <Map className="h-5 w-5 text-orange-600" />
+          </div>
+          <h2>Find Your Classroom</h2>
+        </div>
+        <p className="text-muted-foreground mb-6">
+          Need help finding your classroom on campus? Use our interactive classroom map to locate your classes quickly and easily.
+        </p>
+        <a
+          href="https://acesse.one/ClassroomMap"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(buttonVariants({ variant: 'default' }), 'gap-2')}
+        >
+          <Map className="h-4 w-4" />
+          Open Classroom Map
+        </a>
       </div>
 
       {/* Stats */}

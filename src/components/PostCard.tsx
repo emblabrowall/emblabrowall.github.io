@@ -210,34 +210,22 @@ export function PostCard({ post, user, onLoginRequired, onPostUpdate }: PostCard
           {/* This helps users see both the descriptive title and the actual name/place */}
           {post.restaurantName && (
             <p className="text-sm font-medium text-muted-foreground mb-2">
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                {post.restaurantName}
-              </span>
+              {post.restaurantName}
             </p>
           )}
           {post.activityName && (
             <p className="text-sm font-medium text-muted-foreground mb-2">
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                {post.activityName}
-              </span>
+              {post.activityName}
             </p>
           )}
           {post.cityName && (
             <p className="text-sm font-medium text-muted-foreground mb-2">
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                {post.cityName}
-              </span>
+              {post.cityName}
             </p>
           )}
           {post.name && post.category === 'clubs' && (
             <p className="text-sm font-medium text-muted-foreground mb-2">
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                {post.name}
-              </span>
+              {post.name}
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
