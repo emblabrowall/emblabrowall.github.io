@@ -31,8 +31,17 @@ const initStorage = async () => {
   const { data: buckets } = await storageSupabase.storage.listBuckets()
   const bucketExists = buckets?.some((bucket) => bucket.name === bucketName)
   if (!bucketExists) {
-    await storageSupabase.storage.createBucket(bucketName, { public: false })
+    // Create bucket as public so images can be previewed in Supabase dashboard
+    // Signed URLs will still work for private access if needed
+    await storageSupabase.storage.createBucket(bucketName, { public: true })
     console.log(`Created bucket: ${bucketName}`)
+  } else {
+    // If bucket exists, try to make it public (won't error if already public)
+    const { data: bucket } = await storageSupabase.storage.getBucket(bucketName)
+    if (bucket && !bucket.public) {
+      await storageSupabase.storage.updateBucket(bucketName, { public: true })
+      console.log(`Updated bucket ${bucketName} to public`)
+    }
   }
 }
 await initStorage()
@@ -230,22 +239,45 @@ app.post('/make-server-3134d39c/posts', async (c) => {
 
     let photoUrl = null
     if (photoData) {
-      // Upload photo to Supabase Storage
-      const photoBuffer = Uint8Array.from(atob(photoData.split(',')[1]), c => c.charCodeAt(0))
-      const photoPath = `${postId}.jpg`
-      
-      const { error: uploadError } = await storageSupabase.storage
-        .from(bucketName)
-        .upload(photoPath, photoBuffer, {
-          contentType: 'image/jpeg',
-          upsert: true
-        })
-
-      if (!uploadError) {
-        const { data: signedUrlData } = await storageSupabase.storage
+      try {
+        // Upload photo to Supabase Storage
+        const photoBuffer = Uint8Array.from(atob(photoData.split(',')[1]), c => c.charCodeAt(0))
+        const photoPath = `${postId}.jpg`
+        
+        const { error: uploadError } = await storageSupabase.storage
           .from(bucketName)
-          .createSignedUrl(photoPath, 60 * 60 * 24 * 365) // 1 year
-        photoUrl = signedUrlData?.signedUrl
+          .upload(photoPath, photoBuffer, {
+            contentType: 'image/jpeg',
+            upsert: true
+          })
+
+        if (uploadError) {
+          console.log(`Photo upload error: ${uploadError.message}`)
+          // Continue without photo if upload fails
+        } else {
+          // If bucket is public, use public URL (simpler and works with previews)
+          // Otherwise, use signed URL for private access
+          const { data: bucket } = await storageSupabase.storage.getBucket(bucketName)
+          if (bucket?.public) {
+            const { data: publicUrlData } = await storageSupabase.storage
+              .from(bucketName)
+              .getPublicUrl(photoPath)
+            photoUrl = publicUrlData?.publicUrl
+          } else {
+            const { data: signedUrlData, error: signedUrlError } = await storageSupabase.storage
+              .from(bucketName)
+              .createSignedUrl(photoPath, 60 * 60 * 24 * 365) // 1 year
+            
+            if (signedUrlError) {
+              console.log(`Signed URL creation error: ${signedUrlError.message}`)
+            } else {
+              photoUrl = signedUrlData?.signedUrl
+            }
+          }
+        }
+      } catch (photoError) {
+        console.log(`Photo processing error: ${photoError}`)
+        // Continue without photo if processing fails
       }
     }
 
