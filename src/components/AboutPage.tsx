@@ -67,10 +67,10 @@ export function AboutPage() {
           <h2>Find Your Classroom</h2>
         </div>
         <p className="text-muted-foreground mb-6">
-          Need help finding your classroom on campus? Use our interactive classroom map to locate your classes quickly and easily.
+          Need help finding your classroom on campus? Use the interactive classroom map to locate your classes quickly and easily.
         </p>
         <a
-          href="https://acesse.one/ClassroomMap"
+          href="https://www.canva.com/design/DAG5hq9yBeQ/gwWV1Dsmnd97I0Aq3XUCbg/view?utm_content=DAG5hq9yBeQ&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h7775a7c116"
           target="_blank"
           rel="noopener noreferrer"
           className={cn(buttonVariants({ variant: 'default' }), 'gap-2')}

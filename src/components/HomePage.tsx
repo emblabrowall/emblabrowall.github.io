@@ -1,7 +1,7 @@
-import { Search, BookOpen, Coffee, Music, Plane, PlusCircle, MessageSquare, Sparkles } from 'lucide-react'
+import { Search, BookOpen, Coffee, Music, Plane, PlusCircle, MessageSquare, Sparkles, Trophy, Star } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { api } from '../utils/api'
 import { ImageWithFallback } from './figma/ImageWithFallback'
 import { motion } from 'motion/react'
@@ -12,8 +12,38 @@ interface HomePageProps {
   onSearch: (query: string) => void
 }
 
+interface Contributor {
+  userId: string
+  name: string
+  verified: boolean
+  posts: number
+  comments: number
+  threads: number
+  replies: number
+  upvotesReceived: number
+  totalScore: number
+}
+
 export function HomePage({ onNavigate, onSearch }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('')
+  const [contributors, setContributors] = useState<Contributor[]>([])
+  const [loadingContributors, setLoadingContributors] = useState(true)
+
+  useEffect(() => {
+    loadContributors()
+  }, [])
+
+  const loadContributors = async () => {
+    setLoadingContributors(true)
+    try {
+      const { contributors } = await api.getContributors(5)
+      setContributors(contributors || [])
+    } catch (error) {
+      console.error('Error loading contributors:', error)
+    } finally {
+      setLoadingContributors(false)
+    }
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -256,6 +286,114 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
             Add a Tip
           </Button>
         </div>
+        </motion.div>
+      </ParallaxSection>
+
+      {/* Highest Contributors */}
+      <ParallaxSection speed={0.15}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
+              <Trophy className="h-5 w-5 text-white" />
+            </div>
+            <h2>Highest Contributors</h2>
+          </div>
+          
+          {loadingContributors ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-border p-8 text-center">
+              <p className="text-muted-foreground">Loading contributors...</p>
+            </div>
+          ) : contributors.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-border p-8 text-center">
+              <p className="text-muted-foreground">No contributors yet. Be the first to share!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {contributors.map((contributor, index) => (
+                <motion.div
+                  key={contributor.userId}
+                  className="relative bg-white rounded-2xl shadow-sm border border-border p-6 overflow-hidden group hover:shadow-lg transition-all"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ y: -4 }}
+                >
+                  {/* Rank badge */}
+                  <div className="absolute top-3 right-3">
+                    {index === 0 && (
+                      <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                        <Trophy className="h-4 w-4" />
+                      </div>
+                    )}
+                    {index === 1 && (
+                      <div className="w-8 h-8 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                        <Trophy className="h-4 w-4" />
+                      </div>
+                    )}
+                    {index === 2 && (
+                      <div className="w-8 h-8 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                        <Trophy className="h-4 w-4" />
+                      </div>
+                    )}
+                    {index > 2 && (
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        {index + 1}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Gradient accent line */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+                  
+                  <div className="mt-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-semibold text-lg">{contributor.name}</h3>
+                      {contributor.verified && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
+                          <Star className="h-3 w-3 mr-1" />
+                          Verified
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-1 text-sm text-muted-foreground mb-3">
+                      <div className="flex items-center justify-between">
+                        <span>Posts:</span>
+                        <span className="font-medium">{contributor.posts}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Comments:</span>
+                        <span className="font-medium">{contributor.comments}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Threads:</span>
+                        <span className="font-medium">{contributor.threads}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Replies:</span>
+                        <span className="font-medium">{contributor.replies}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-3 border-t border-border">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Total Score</span>
+                        <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                          {contributor.totalScore}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </motion.div>
       </ParallaxSection>
 

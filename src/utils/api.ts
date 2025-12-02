@@ -452,4 +452,14 @@ export const api = {
     }
     return data
   },
+
+  // Get top contributors
+  async getContributors(limit: number = 5) {
+    const response = await fetch(`${API_URL}/contributors?limit=${limit}`, {
+      headers: {
+        'Authorization': `Bearer ${publicAnonKey}`,
+      },
+    })
+    return response.json()
+  },
 }

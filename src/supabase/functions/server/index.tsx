@@ -1480,4 +1480,177 @@ app.get('/events', handleGetEvents)
 app.delete('/make-server-3134d39c/events/:eventId', handleDeleteEvent)
 app.delete('/events/:eventId', handleDeleteEvent)
 
+// ============== CONTRIBUTORS ROUTES ==============
+
+// Get top contributors
+app.get('/make-server-3134d39c/contributors', async (c) => {
+  try {
+    const limit = parseInt(c.req.query('limit') || '5')
+    
+    // Get all posts
+    const posts = await kv.getByPrefix('posts:') || []
+    
+    // Get all comments
+    const allComments = await kv.getByPrefix('comments:') || []
+    
+    // Get all threads
+    const threads = await kv.getByPrefix('threads:') || []
+    
+    // Get all replies
+    const allReplies = await kv.getByPrefix('replies:') || []
+    
+    // Get all upvotes (for posts)
+    const allPostUpvotes = await kv.getByPrefix('upvotes:') || []
+    
+    // Get all thread upvotes
+    const allThreadUpvotes = await kv.getByPrefix('thread-upvotes:') || []
+    
+    // Get all reply upvotes
+    const allReplyUpvotes = await kv.getByPrefix('reply-upvotes:') || []
+    
+    // Calculate scores for each user
+    const userScores: Record<string, {
+      userId: string
+      name: string
+      verified: boolean
+      posts: number
+      comments: number
+      threads: number
+      replies: number
+      upvotesReceived: number
+      totalScore: number
+    }> = {}
+    
+    // Count posts
+    for (const post of posts) {
+      if (post && post.authorId) {
+        if (!userScores[post.authorId]) {
+          userScores[post.authorId] = {
+            userId: post.authorId,
+            name: post.authorName || 'Anonymous',
+            verified: post.verified || false,
+            posts: 0,
+            comments: 0,
+            threads: 0,
+            replies: 0,
+            upvotesReceived: 0,
+            totalScore: 0,
+          }
+        }
+        userScores[post.authorId].posts++
+        // Count upvotes received on posts
+        const postUpvotes = allPostUpvotes.filter((upvote: any) => {
+          // Extract postId from upvote key format: upvotes:postId:userId
+          const key = typeof upvote === 'string' ? upvote : upvote.key || ''
+          return key.startsWith(`upvotes:${post.id}:`)
+        })
+        userScores[post.authorId].upvotesReceived += postUpvotes.length
+      }
+    }
+    
+    // Count comments
+    for (const comment of allComments) {
+      if (comment && comment.authorId) {
+        if (!userScores[comment.authorId]) {
+          userScores[comment.authorId] = {
+            userId: comment.authorId,
+            name: comment.authorName || 'Anonymous',
+            verified: comment.verified || false,
+            posts: 0,
+            comments: 0,
+            threads: 0,
+            replies: 0,
+            upvotesReceived: 0,
+            totalScore: 0,
+          }
+        }
+        userScores[comment.authorId].comments++
+      }
+    }
+    
+    // Count threads
+    for (const thread of threads) {
+      if (thread && thread.authorId) {
+        if (!userScores[thread.authorId]) {
+          userScores[thread.authorId] = {
+            userId: thread.authorId,
+            name: thread.authorName || 'Anonymous',
+            verified: thread.verified || false,
+            posts: 0,
+            comments: 0,
+            threads: 0,
+            replies: 0,
+            upvotesReceived: 0,
+            totalScore: 0,
+          }
+        }
+        userScores[thread.authorId].threads++
+        // Count upvotes received on threads
+        const threadUpvotes = allThreadUpvotes.filter((upvote: any) => {
+          const key = typeof upvote === 'string' ? upvote : upvote.key || ''
+          return key.startsWith(`thread-upvotes:${thread.id}:`)
+        })
+        userScores[thread.authorId].upvotesReceived += threadUpvotes.length
+      }
+    }
+    
+    // Count replies
+    for (const reply of allReplies) {
+      if (reply && reply.authorId) {
+        if (!userScores[reply.authorId]) {
+          userScores[reply.authorId] = {
+            userId: reply.authorId,
+            name: reply.authorName || 'Anonymous',
+            verified: reply.verified || false,
+            posts: 0,
+            comments: 0,
+            threads: 0,
+            replies: 0,
+            upvotesReceived: 0,
+            totalScore: 0,
+          }
+        }
+        userScores[reply.authorId].replies++
+        // Count upvotes received on replies
+        const replyUpvotes = allReplyUpvotes.filter((upvote: any) => {
+          const key = typeof upvote === 'string' ? upvote : upvote.key || ''
+          return key.startsWith(`reply-upvotes:${reply.id}:`)
+        })
+        userScores[reply.authorId].upvotesReceived += replyUpvotes.length
+        // Count helpful marks as bonus points
+        if (reply.helpful) {
+          userScores[reply.authorId].upvotesReceived += 2 // Bonus for helpful replies
+        }
+      }
+    }
+    
+    // Calculate total scores
+    // Points: Posts (5), Comments (2), Threads (3), Replies (2), Upvotes received (1 each)
+    for (const userId in userScores) {
+      const user = userScores[userId]
+      user.totalScore = 
+        (user.posts * 5) +
+        (user.comments * 2) +
+        (user.threads * 3) +
+        (user.replies * 2) +
+        (user.upvotesReceived * 1)
+    }
+    
+    // Convert to array and sort by total score
+    const contributors = Object.values(userScores)
+      .sort((a, b) => b.totalScore - a.totalScore)
+      .slice(0, limit)
+    
+    return c.json({ contributors })
+  } catch (error) {
+    console.log(`Get contributors error: ${error}`)
+    return c.json({ error: 'Failed to get contributors' }, 500)
+  }
+})
+
+// Also support non-prefixed route
+app.get('/contributors', async (c) => {
+  return app.fetch(c.req.raw)
+})
+
 Deno.serve(app.fetch)
