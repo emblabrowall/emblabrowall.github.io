@@ -345,16 +345,20 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
                           whileHover={{ x: 4 }}
                         >
                           {/* Rank number - Special styling for #1 */}
-                          <div className={`flex-shrink-0 w-16 h-16 rounded-xl flex items-center justify-center font-black text-3xl text-white ${
-                            index === 0 
-                              ? 'bg-gradient-to-br from-yellow-500 via-yellow-600 to-orange-700 shadow-lg shadow-yellow-500/50 ring-2 ring-yellow-300' 
-                              : index === 1
-                              ? 'bg-gradient-to-br from-slate-600 to-slate-800 shadow-md border-2 border-slate-500'
-                              : index === 2
-                              ? 'bg-gradient-to-br from-orange-600 to-orange-800 shadow-md border-2 border-orange-500'
-                              : 'bg-gray-700 border-2 border-gray-800'
-                          }`}>
-                            {index + 1}
+                          <div 
+                            className={`flex-shrink-0 w-16 h-16 rounded-xl flex items-center justify-center ${
+                              index === 0 
+                                ? 'bg-gradient-to-br from-yellow-500 via-yellow-600 to-orange-700 shadow-lg shadow-yellow-500/50 ring-2 ring-yellow-300' 
+                                : index === 1
+                                ? 'bg-gradient-to-br from-slate-600 to-slate-800 shadow-md border-2 border-slate-500'
+                                : index === 2
+                                ? 'bg-gradient-to-br from-orange-600 to-orange-800 shadow-md border-2 border-orange-500'
+                                : 'bg-gray-700 border-2 border-gray-800'
+                            }`}
+                          >
+                            <span className="text-white text-3xl font-black leading-none" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                              {index + 1}
+                            </span>
                           </div>
                           
                           {/* Name and info */}
