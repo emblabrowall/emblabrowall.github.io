@@ -1,4 +1,4 @@
-import { Search, BookOpen, Coffee, Music, Plane, PlusCircle, MessageSquare, Sparkles, Trophy, Star, Crown, X } from 'lucide-react'
+import { Search, BookOpen, Coffee, Music, Plane, PlusCircle, MessageSquare, Sparkles, Trophy, Star, Crown, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { useState, useEffect } from 'react'
@@ -7,6 +7,7 @@ import { ImageWithFallback } from './figma/ImageWithFallback'
 import { motion } from 'motion/react'
 import { ParallaxSection } from './ParallaxSection'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible'
 
 interface HomePageProps {
   onNavigate: (page: string) => void
@@ -30,6 +31,7 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
   const [contributors, setContributors] = useState<Contributor[]>([])
   const [loadingContributors, setLoadingContributors] = useState(true)
   const [selectedContributor, setSelectedContributor] = useState<Contributor | null>(null)
+  const [expandedContributor, setExpandedContributor] = useState<string | null>(null)
 
   useEffect(() => {
     loadContributors()
@@ -318,78 +320,125 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
             <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
               <div className="divide-y divide-gray-200">
                 {contributors.map((contributor, index) => (
-                  <motion.div
+                  <Collapsible
                     key={contributor.userId}
-                    className={`relative flex items-center gap-4 p-4 transition-all ${
-                      index === 0 
-                        ? 'bg-gradient-to-r from-yellow-50 via-yellow-100 to-orange-50 border-l-4 border-yellow-500' 
-                        : index === 1 
-                        ? 'bg-gradient-to-r from-gray-50 via-gray-100 to-slate-50 border-l-4 border-gray-400'
-                        : index === 2
-                        ? 'bg-gradient-to-r from-orange-50 via-orange-100 to-amber-50 border-l-4 border-orange-400'
-                        : 'hover:bg-gray-50 border-l-4 border-transparent hover:border-blue-300'
-                    }`}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                    whileHover={{ x: 4 }}
+                    open={expandedContributor === contributor.userId}
+                    onOpenChange={(open) => setExpandedContributor(open ? contributor.userId : null)}
                   >
-                    {/* Rank number - Nintendo style */}
-                    <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center font-bold text-xl ${
-                      index === 0 
-                        ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-lg shadow-yellow-500/50' 
-                        : index === 1
-                        ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-white shadow-md'
-                        : index === 2
-                        ? 'bg-gradient-to-br from-orange-300 to-orange-500 text-white shadow-md'
-                        : 'bg-gray-200 text-gray-700'
-                    }`}>
-                      {index === 0 ? (
-                        <Crown className="h-6 w-6 fill-white" />
-                      ) : (
-                        index + 1
-                      )}
-                    </div>
-                    
-                    {/* Name and info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                          onClick={() => setSelectedContributor(contributor)}
-                          className={`font-bold text-lg hover:underline transition-all cursor-pointer text-left ${
-                            index === 0 ? 'text-yellow-900' : index === 1 ? 'text-gray-800' : index === 2 ? 'text-orange-900' : 'text-gray-800'
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
+                    >
+                      <CollapsibleTrigger asChild>
+                        <motion.div
+                          className={`relative flex items-center gap-4 p-4 transition-all cursor-pointer ${
+                            index === 0 
+                              ? 'bg-gradient-to-r from-yellow-50 via-yellow-100 to-orange-50 border-l-4 border-yellow-500 shadow-md' 
+                              : index === 1 
+                              ? 'bg-gradient-to-r from-gray-50 via-gray-100 to-slate-50 border-l-4 border-gray-400'
+                              : index === 2
+                              ? 'bg-gradient-to-r from-orange-50 via-orange-100 to-amber-50 border-l-4 border-orange-400'
+                              : 'hover:bg-gray-50 border-l-4 border-transparent hover:border-blue-300'
                           }`}
+                          whileHover={{ x: 4 }}
                         >
-                          {contributor.name}
-                        </button>
-                        {contributor.verified && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-300">
-                            <Star className="h-3 w-3 mr-1 fill-blue-600" />
-                            Verified
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Score - Nintendo style */}
-                    <div className="flex-shrink-0 text-right">
-                      <div className={`text-2xl font-black ${
-                        index === 0 
-                          ? 'text-yellow-700' 
-                          : index === 1 
-                          ? 'text-gray-700'
-                          : index === 2
-                          ? 'text-orange-700'
-                          : 'text-gray-700'
-                      }`}>
-                        {contributor.totalScore}
-                      </div>
-                      <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
-                        PTS
-                      </div>
-                    </div>
-                  </motion.div>
+                          {/* Rank number - Special styling for #1 */}
+                          <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center font-bold text-xl ${
+                            index === 0 
+                              ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-600 text-white shadow-lg shadow-yellow-500/50 ring-2 ring-yellow-300' 
+                              : index === 1
+                              ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-white shadow-md'
+                              : index === 2
+                              ? 'bg-gradient-to-br from-orange-300 to-orange-500 text-white shadow-md'
+                              : 'bg-gray-200 text-gray-700'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          
+                          {/* Name and info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`font-bold text-lg ${
+                                index === 0 ? 'text-yellow-900' : index === 1 ? 'text-gray-800' : index === 2 ? 'text-orange-900' : 'text-gray-800'
+                              }`}>
+                                {contributor.name}
+                                {index === 0 && (
+                                  <span className="ml-2 text-yellow-600">⭐</span>
+                                )}
+                              </span>
+                              {contributor.verified && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-300">
+                                  <Star className="h-3 w-3 mr-1 fill-blue-600" />
+                                  Verified
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Score - Nintendo style */}
+                          <div className="flex-shrink-0 text-right mr-2">
+                            <div className={`text-2xl font-black ${
+                              index === 0 
+                                ? 'text-yellow-700' 
+                                : index === 1 
+                                ? 'text-gray-700'
+                                : index === 2
+                                ? 'text-orange-700'
+                                : 'text-gray-700'
+                            }`}>
+                              {contributor.totalScore}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
+                              PTS
+                            </div>
+                          </div>
+                          
+                          {/* Dropdown indicator */}
+                          <div className="flex-shrink-0">
+                            {expandedContributor === contributor.userId ? (
+                              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </div>
+                        </motion.div>
+                      </CollapsibleTrigger>
+                      
+                      {/* Expanded content */}
+                      <CollapsibleContent>
+                        <div className={`px-4 pb-4 pt-2 ${
+                          index === 0 
+                            ? 'bg-gradient-to-r from-yellow-50/50 to-orange-50/50' 
+                            : index === 1 
+                            ? 'bg-gray-50/50'
+                            : index === 2
+                            ? 'bg-orange-50/50'
+                            : 'bg-gray-50/30'
+                        }`}>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                              <span className="font-medium text-sm">Posts:</span>
+                              <span className="text-lg font-bold text-blue-600">{contributor.posts}</span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                              <span className="font-medium text-sm">Comments:</span>
+                              <span className="text-lg font-bold text-purple-600">{contributor.comments}</span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                              <span className="font-medium text-sm">Threads:</span>
+                              <span className="text-lg font-bold text-pink-600">{contributor.threads}</span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                              <span className="font-medium text-sm">Replies:</span>
+                              <span className="text-lg font-bold text-indigo-600">{contributor.replies}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </motion.div>
+                  </Collapsible>
                 ))}
               </div>
             </div>
