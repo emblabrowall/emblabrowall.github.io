@@ -315,76 +315,83 @@ export function HomePage({ onNavigate, onSearch }: HomePageProps) {
               <p className="text-muted-foreground">No contributors yet. Be the first to share!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              {contributors.map((contributor, index) => (
-                <motion.div
-                  key={contributor.userId}
-                  className="relative bg-white rounded-2xl shadow-sm border border-border p-6 overflow-hidden group hover:shadow-lg transition-all"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  whileHover={{ y: -4 }}
-                >
-                  {/* Rank badge with crown for #1 */}
-                  <div className="absolute top-3 right-3">
-                    {index === 0 && (
-                      <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-yellow-500/50 ring-2 ring-yellow-300/50">
-                        <Crown className="h-5 w-5 fill-white" />
-                      </div>
-                    )}
-                    {index === 1 && (
-                      <div className="w-8 h-8 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                        <Trophy className="h-4 w-4" />
-                      </div>
-                    )}
-                    {index === 2 && (
-                      <div className="w-8 h-8 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                        <Trophy className="h-4 w-4" />
-                      </div>
-                    )}
-                    {index > 2 && (
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                        {index + 1}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Gold gradient accent line for #1 */}
-                  {index === 0 ? (
-                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500"></div>
-                  ) : (
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-                  )}
-                  
-                  <div className="mt-2">
-                    <div className="flex items-center gap-2 mb-4">
-                      <button
-                        onClick={() => setSelectedContributor(contributor)}
-                        className="font-semibold text-lg hover:text-blue-600 transition-colors cursor-pointer text-left"
-                      >
-                        {contributor.name}
-                      </button>
-                      {contributor.verified && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
-                          <Star className="h-3 w-3 mr-1" />
-                          Verified
-                        </span>
+            <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
+              <div className="divide-y divide-gray-200">
+                {contributors.map((contributor, index) => (
+                  <motion.div
+                    key={contributor.userId}
+                    className={`relative flex items-center gap-4 p-4 transition-all ${
+                      index === 0 
+                        ? 'bg-gradient-to-r from-yellow-50 via-yellow-100 to-orange-50 border-l-4 border-yellow-500' 
+                        : index === 1 
+                        ? 'bg-gradient-to-r from-gray-50 via-gray-100 to-slate-50 border-l-4 border-gray-400'
+                        : index === 2
+                        ? 'bg-gradient-to-r from-orange-50 via-orange-100 to-amber-50 border-l-4 border-orange-400'
+                        : 'hover:bg-gray-50 border-l-4 border-transparent hover:border-blue-300'
+                    }`}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    whileHover={{ x: 4 }}
+                  >
+                    {/* Rank number - Nintendo style */}
+                    <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center font-bold text-xl ${
+                      index === 0 
+                        ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-lg shadow-yellow-500/50' 
+                        : index === 1
+                        ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-white shadow-md'
+                        : index === 2
+                        ? 'bg-gradient-to-br from-orange-300 to-orange-500 text-white shadow-md'
+                        : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {index === 0 ? (
+                        <Crown className="h-6 w-6 fill-white" />
+                      ) : (
+                        index + 1
                       )}
                     </div>
                     
-                    {/* Only show total score */}
-                    <div className="pt-2">
-                      <div className="flex items-center justify-center">
-                        <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                          {contributor.totalScore}
-                        </span>
-                        <span className="ml-2 text-sm text-muted-foreground">points</span>
+                    {/* Name and info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => setSelectedContributor(contributor)}
+                          className={`font-bold text-lg hover:underline transition-all cursor-pointer text-left ${
+                            index === 0 ? 'text-yellow-900' : index === 1 ? 'text-gray-800' : index === 2 ? 'text-orange-900' : 'text-gray-800'
+                          }`}
+                        >
+                          {contributor.name}
+                        </button>
+                        {contributor.verified && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-300">
+                            <Star className="h-3 w-3 mr-1 fill-blue-600" />
+                            Verified
+                          </span>
+                        )}
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                    
+                    {/* Score - Nintendo style */}
+                    <div className="flex-shrink-0 text-right">
+                      <div className={`text-2xl font-black ${
+                        index === 0 
+                          ? 'text-yellow-700' 
+                          : index === 1 
+                          ? 'text-gray-700'
+                          : index === 2
+                          ? 'text-orange-700'
+                          : 'text-gray-700'
+                      }`}>
+                        {contributor.totalScore}
+                      </div>
+                      <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
+                        PTS
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           )}
         </motion.div>
